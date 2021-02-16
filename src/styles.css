@@ -2,3 +2,39 @@
   font-family: sans-serif;
   text-align: center;
 }
+
+button {
+  font-weight: 600;
+  color: white;
+  border: none;
+  outline-color: transparent;
+  outline-style: none;
+  cursor: pointer;
+  padding: 14px 10px;
+  display: flex;
+  flex-direction: row;
+  justify-content: center;
+  align-items: flex-start;
+  background: #4e44ce;
+  border-radius: 6px;
+}
+
+button:hover {
+  background: #423aa9;
+}
+
+main {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+}
+
+main > * {
+  margin-bottom: 10px;
+}
+
+.log {
+  font-style: italic;
+  margin: 10px 0px;
+}
