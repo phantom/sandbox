@@ -25,8 +25,8 @@ const getProvider = (): PhantomProvider | undefined => {
     if (provider.isPhantom) {
       return provider;
     }
-    alert("A provider was found, but not Phantom.");
   }
+  window.open("https://phantom.app/", "_blank");
 };
 
 const NETWORK = clusterApiUrl("mainnet-beta");
