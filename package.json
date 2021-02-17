@@ -10,7 +10,6 @@
   "main": "src/index.tsx",
   "dependencies": {
     "@solana/web3.js": "0.91.3",
-    "eventemitter3": "4.0.7",
     "react": "17.0.1",
     "react-dom": "17.0.1",
     "react-scripts": "4.0.0"

@@ -6,10 +6,16 @@ import {
   clusterApiUrl,
   SystemProgram
 } from "@solana/web3.js";
-import EventEmitter from "eventemitter3";
 import "./styles.css";
 
-interface PhantomProvider extends EventEmitter {
+type PhantomEvent = "disconnect" | "connect";
+type PhantomRequestMethod =
+  | "connect"
+  | "disconnect"
+  | "signTransaction"
+  | "signAllTransactions";
+
+interface PhantomProvider {
   publicKey: PublicKey | null;
   isConnected: boolean | null;
   autoApprove: boolean | null;
@@ -17,6 +23,8 @@ interface PhantomProvider extends EventEmitter {
   signAllTransactions: (transactions: Transaction[]) => Promise<Transaction>;
   connect: () => Promise<void>;
   disconnect: () => Promise<void>;
+  on: (event: PhantomEvent, handler: (args: any) => void) => void;
+  request: (method: PhantomRequestMethod, params: any) => Promise<any>;
 }
 
 const getProvider = (): PhantomProvider | undefined => {
