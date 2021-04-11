@@ -15,8 +15,8 @@ type PhantomRequestMethod =
   | "signTransaction"
   | "signAllTransactions";
 
-interface Account {
-  address?: string;
+interface ConnectOpts {
+  onlyIfTrusted: boolean;
 }
 
 interface PhantomProvider {
@@ -25,19 +25,10 @@ interface PhantomProvider {
   autoApprove: boolean | null;
   signTransaction: (transaction: Transaction) => Promise<Transaction>;
   signAllTransactions: (transactions: Transaction[]) => Promise<Transaction[]>;
-  connect: () => Promise<void>;
+  connect: (opts?: Partial<ConnectOpts>) => Promise<void>;
   disconnect: () => Promise<void>;
-  getAccounts: () => Promise<Account[]>;
   on: (event: PhantomEvent, handler: (args: any) => void) => void;
   request: (method: PhantomRequestMethod, params: any) => Promise<any>;
-}
-
-enum WalletState {
-  Unknown = "Loading",
-  NotPresent = "Not Present",
-  Locked = "Locked",
-  Trusted = "dApp Trusted",
-  NotTrusted = "dApp Not Trusted"
 }
 
 const getProvider = (): PhantomProvider | undefined => {
@@ -55,28 +46,11 @@ const NETWORK = clusterApiUrl("mainnet-beta");
 export default function App() {
   const provider = getProvider();
   const [logs, setLogs] = useState<string[]>([]);
-  const [walletState, setWalletState] = useState<WalletState>(
-    provider ? WalletState.Unknown : WalletState.NotPresent
-  );
   const addLog = (log: string) => setLogs([...logs, log]);
   const connection = new Connection(NETWORK);
   const [, setConnected] = useState<boolean>(false);
   useEffect(() => {
     if (provider) {
-      provider.getAccounts().then((value) => {
-        if (value.length === 0) {
-          setWalletState(WalletState.NotTrusted);
-          return;
-        }
-        if (value.length > 0 && !value[0].address) {
-          setWalletState(WalletState.Locked);
-          return;
-        }
-        if (value.length > 0 && value[0].address) {
-          setWalletState(WalletState.Trusted);
-          return;
-        }
-      });
       provider.on("connect", () => {
         setConnected(true);
         addLog("Connected to wallet " + provider.publicKey?.toBase58());
@@ -85,6 +59,8 @@ export default function App() {
         setConnected(false);
         addLog("Disconnected from wallet");
       });
+      // try to eagerly connect
+      provider.connect({ onlyIfTrusted: true });
       return () => {
         provider.disconnect();
       };
@@ -137,7 +113,6 @@ export default function App() {
           </>
         ) : (
           <>
-            <div>{walletState}</div>
             <button onClick={() => provider.connect()}>
               Connect to Phantom
             </button>
