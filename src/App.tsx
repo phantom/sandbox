@@ -69,22 +69,30 @@ export default function App() {
   if (!provider) {
     return <h2>Could not find a provider</h2>;
   }
+
+  const createTransferTransaction = async () => {
+    if (!provider.publicKey) {
+      return;
+    }
+    let transaction = new Transaction().add(
+      SystemProgram.transfer({
+        fromPubkey: provider.publicKey,
+        toPubkey: provider.publicKey,
+        lamports: 100
+      })
+    );
+    transaction.feePayer = provider.publicKey;
+    addLog("Getting recent blockhash");
+    (transaction as any).recentBlockhash = (
+      await connection.getRecentBlockhash()
+    ).blockhash;
+    return transaction;
+  };
+
   const sendTransaction = async () => {
-    if (provider.publicKey) {
+    const transaction = await createTransferTransaction();
+    if (transaction) {
       try {
-        let transaction = new Transaction().add(
-          SystemProgram.transfer({
-            fromPubkey: provider.publicKey,
-            toPubkey: provider.publicKey,
-            lamports: 100
-          })
-        );
-        transaction.feePayer = provider.publicKey;
-        addLog("Getting recent blockhash");
-        (transaction as any).recentBlockhash = (
-          await connection.getRecentBlockhash()
-        ).blockhash;
-        addLog("Sending signature request to wallet");
         let signed = await provider.signTransaction(transaction);
         addLog("Got signature, submitting transaction");
         let signature = await connection.sendRawTransaction(signed.serialize());
