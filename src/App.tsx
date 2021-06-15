@@ -107,6 +107,19 @@ export default function App() {
       }
     }
   };
+  const signMultipleTransactions = async () => {
+    const [transaction1, transaction2] = await Promise.all([
+      createTransferTransaction(),
+      createTransferTransaction()
+    ]);
+    if (transaction1 && transaction2) {
+      const signature = await provider.signAllTransactions([
+        transaction1,
+        transaction2
+      ]);
+      addLog("Signature " + signature);
+    }
+  };
   return (
     <div className="App">
       <h1>Phantom Sandbox</h1>
@@ -117,6 +130,7 @@ export default function App() {
             <div>isConnected: {provider.isConnected ? "true" : "false"}.</div>
             <div>autoApprove: {provider.autoApprove ? "true" : "false"}. </div>
             <button onClick={sendTransaction}>Send Transaction</button>
+            <button onClick={signMultipleTransactions}>Sign Multiple Transactions</button>
             <button onClick={() => provider.disconnect()}>Disconnect</button>
           </>
         ) : (
