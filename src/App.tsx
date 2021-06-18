@@ -107,16 +107,21 @@ export default function App() {
       }
     }
   };
-  const signMultipleTransactions = async () => {
+  const signMultipleTransactions = async (onlyFirst: boolean = false) => {
     const [transaction1, transaction2] = await Promise.all([
       createTransferTransaction(),
       createTransferTransaction()
     ]);
     if (transaction1 && transaction2) {
-      const signature = await provider.signAllTransactions([
-        transaction1,
-        transaction2
-      ]);
+      let signature;
+      if (onlyFirst) {
+        signature = await provider.signAllTransactions([transaction1]);
+      } else {
+        signature = await provider.signAllTransactions([
+          transaction1,
+          transaction2
+        ]);
+      }
       addLog("Signature " + signature);
     }
   };
@@ -130,7 +135,12 @@ export default function App() {
             <div>isConnected: {provider.isConnected ? "true" : "false"}.</div>
             <div>autoApprove: {provider.autoApprove ? "true" : "false"}. </div>
             <button onClick={sendTransaction}>Send Transaction</button>
-            <button onClick={signMultipleTransactions}>Sign Multiple Transactions</button>
+            <button onClick={() => signMultipleTransactions(false)}>
+              Sign All Transactions (multiple){" "}
+            </button>
+            <button onClick={() => signMultipleTransactions(true)}>
+              Sign All Transactions (single){" "}
+            </button>
             <button onClick={() => provider.disconnect()}>Disconnect</button>
           </>
         ) : (
