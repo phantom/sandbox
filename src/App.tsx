@@ -8,12 +8,14 @@ import {
 } from "@solana/web3.js";
 import "./styles.css";
 
+type DisplayEncoding = "utf8" | "hex";
 type PhantomEvent = "disconnect" | "connect";
 type PhantomRequestMethod =
   | "connect"
   | "disconnect"
   | "signTransaction"
-  | "signAllTransactions";
+  | "signAllTransactions"
+  | "signMessage";
 
 interface ConnectOpts {
   onlyIfTrusted: boolean;
@@ -25,6 +27,10 @@ interface PhantomProvider {
   autoApprove: boolean | null;
   signTransaction: (transaction: Transaction) => Promise<Transaction>;
   signAllTransactions: (transactions: Transaction[]) => Promise<Transaction[]>;
+  signMessage: (
+    message: Uint8Array | string,
+    display?: DisplayEncoding
+  ) => Promise<any>;
   connect: (opts?: Partial<ConnectOpts>) => Promise<void>;
   disconnect: () => Promise<void>;
   on: (event: PhantomEvent, handler: (args: any) => void) => void;
@@ -125,6 +131,11 @@ export default function App() {
       addLog("Signature " + signature);
     }
   };
+  const signMessage = async (message: string) => {
+    const data = new TextEncoder().encode(message);
+    const obj = await provider.signMessage(data);
+    console.log(obj);
+  };
   return (
     <div className="App">
       <h1>Phantom Sandbox</h1>
@@ -140,6 +151,15 @@ export default function App() {
             </button>
             <button onClick={() => signMultipleTransactions(true)}>
               Sign All Transactions (single){" "}
+            </button>
+            <button
+              onClick={() =>
+                signMessage(
+                  "To avoid digital dognappers, sign below to authenticate with CryptoCorgis."
+                )
+              }
+            >
+              Sign Message
             </button>
             <button onClick={() => provider.disconnect()}>Disconnect</button>
           </>
