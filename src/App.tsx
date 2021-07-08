@@ -133,8 +133,8 @@ export default function App() {
   };
   const signMessage = async (message: string) => {
     const data = new TextEncoder().encode(message);
-    const obj = await provider.signMessage(data);
-    console.log(obj);
+    await provider.signMessage(data);
+    addLog("Message signed");
   };
   return (
     <div className="App">
