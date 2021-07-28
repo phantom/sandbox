@@ -9,7 +9,7 @@ import {
 import "./styles.css";
 
 type DisplayEncoding = "utf8" | "hex";
-type PhantomEvent = "disconnect" | "connect";
+type PhantomEvent = "disconnect" | "connect" | "connected";
 type PhantomRequestMethod =
   | "connect"
   | "disconnect"
@@ -57,7 +57,7 @@ export default function App() {
   const [, setConnected] = useState<boolean>(false);
   useEffect(() => {
     if (provider) {
-      provider.on("connect", () => {
+      provider.on("connected", () => {
         setConnected(true);
         addLog("Connected to wallet " + provider.publicKey?.toBase58());
       });
