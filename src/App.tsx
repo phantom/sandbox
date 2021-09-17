@@ -38,7 +38,8 @@ interface PhantomProvider {
 
 const getProvider = (): PhantomProvider | undefined => {
   if ("solana" in window) {
-    const provider = (window as any).solana;
+    const anyWindow: any = window;
+    const provider = anyWindow.solana;
     if (provider.isPhantom) {
       return provider;
     }
@@ -88,7 +89,8 @@ export default function App() {
     );
     transaction.feePayer = provider.publicKey;
     addLog("Getting recent blockhash");
-    (transaction as any).recentBlockhash = (
+    const anyTransaction: any = transaction;
+    anyTransaction.recentBlockhash = (
       await connection.getRecentBlockhash()
     ).blockhash;
     return transaction;
