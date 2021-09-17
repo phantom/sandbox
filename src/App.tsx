@@ -4,7 +4,7 @@ import {
   PublicKey,
   Transaction,
   clusterApiUrl,
-  SystemProgram
+  SystemProgram,
 } from "@solana/web3.js";
 import "./styles.css";
 
@@ -24,14 +24,13 @@ interface ConnectOpts {
 interface PhantomProvider {
   publicKey: PublicKey | null;
   isConnected: boolean | null;
-  autoApprove: boolean | null;
   signTransaction: (transaction: Transaction) => Promise<Transaction>;
   signAllTransactions: (transactions: Transaction[]) => Promise<Transaction[]>;
   signMessage: (
     message: Uint8Array | string,
     display?: DisplayEncoding
   ) => Promise<any>;
-  connect: (opts?: Partial<ConnectOpts>) => Promise<{ publicKey: PublicKey, autoApprove: boolean }>;
+  connect: (opts?: Partial<ConnectOpts>) => Promise<{ publicKey: PublicKey }>;
   disconnect: () => Promise<void>;
   on: (event: PhantomEvent, handler: (args: any) => void) => void;
   request: (method: PhantomRequestMethod, params: any) => Promise<unknown>;
@@ -84,7 +83,7 @@ export default function App() {
       SystemProgram.transfer({
         fromPubkey: provider.publicKey,
         toPubkey: provider.publicKey,
-        lamports: 100
+        lamports: 100,
       })
     );
     transaction.feePayer = provider.publicKey;
@@ -116,7 +115,7 @@ export default function App() {
   const signMultipleTransactions = async (onlyFirst: boolean = false) => {
     const [transaction1, transaction2] = await Promise.all([
       createTransferTransaction(),
-      createTransferTransaction()
+      createTransferTransaction(),
     ]);
     if (transaction1 && transaction2) {
       let signature;
@@ -126,7 +125,7 @@ export default function App() {
         } else {
           signature = await provider.signAllTransactions([
             transaction1,
-            transaction2
+            transaction2,
           ]);
         }
       } catch (err) {
@@ -154,7 +153,6 @@ export default function App() {
           <>
             <div>Wallet address: {provider.publicKey?.toBase58()}.</div>
             <div>isConnected: {provider.isConnected ? "true" : "false"}.</div>
-            <div>autoApprove: {provider.autoApprove ? "true" : "false"}. </div>
             <button onClick={sendTransaction}>Send Transaction</button>
             <button onClick={() => signMultipleTransactions(false)}>
               Sign All Transactions (multiple){" "}
