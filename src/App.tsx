@@ -15,6 +15,7 @@ type PhantomRequestMethod =
   | "disconnect"
   | "signTransaction"
   | "signAllTransactions"
+  | "signAndSendTransaction"
   | "signMessage";
 
 interface ConnectOpts {
@@ -26,10 +27,13 @@ interface PhantomProvider {
   isConnected: boolean | null;
   signTransaction: (transaction: Transaction) => Promise<Transaction>;
   signAllTransactions: (transactions: Transaction[]) => Promise<Transaction[]>;
+  signAndSendTransaction: (
+    transaction: Transaction
+  ) => Promise<{ signature: string }>;
   signMessage: (
     message: Uint8Array | string,
     display?: DisplayEncoding
-  ) => Promise<any>;
+  ) => Promise<{ signature: string; publicKey: PublicKey }>;
   connect: (opts?: Partial<ConnectOpts>) => Promise<{ publicKey: PublicKey }>;
   disconnect: () => Promise<void>;
   on: (event: PhantomEvent, handler: (args: any) => void) => void;
@@ -100,14 +104,25 @@ export default function App() {
     const transaction = await createTransferTransaction();
     if (transaction) {
       try {
-        let signed = await provider.signTransaction(transaction);
-        addLog("Got signature, submitting transaction");
-        let signature = await connection.sendRawTransaction(signed.serialize());
+        let { signature } = await provider.signAndSendTransaction(transaction);
         addLog(
           "Submitted transaction " + signature + ", awaiting confirmation"
         );
         await connection.confirmTransaction(signature);
         addLog("Transaction " + signature + " confirmed");
+      } catch (err) {
+        console.warn(err);
+        addLog("Error: " + JSON.stringify(err));
+      }
+    }
+  };
+
+  const signTransaction = async () => {
+    const transaction = await createTransferTransaction();
+    if (transaction) {
+      try {
+        await provider.signTransaction(transaction);
+        addLog(`Successfully signed transaction.`);
       } catch (err) {
         console.warn(err);
         addLog("Error: " + JSON.stringify(err));
@@ -156,6 +171,7 @@ export default function App() {
             <div>Wallet address: {provider.publicKey?.toBase58()}.</div>
             <div>isConnected: {provider.isConnected ? "true" : "false"}.</div>
             <button onClick={sendTransaction}>Send Transaction</button>
+            <button onClick={signTransaction}>Sign Transaction</button>
             <button onClick={() => signMultipleTransactions(false)}>
               Sign All Transactions (multiple){" "}
             </button>
