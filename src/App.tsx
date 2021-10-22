@@ -202,6 +202,17 @@ export default function App() {
     sendTransaction(transaction);
   };
 
+  const revokeApproval = async () => {
+    const revokeInstruction = Token.createRevokeInstruction(
+      TOKEN_PROGRAM_ID,
+      await findAssociatedTokenAddress(provider.publicKey, USDC_MINT_ADDRESS),
+      provider.publicKey,
+      []
+    );
+    const transaction = await createTransaction([revokeInstruction]);
+    sendTransaction(transaction);
+  };
+
   const signMessage = async (message: string) => {
     const data = new TextEncoder().encode(message);
     try {
@@ -229,6 +240,7 @@ export default function App() {
               Sign All Transactions (single){" "}
             </button>
             <button onClick={setApproval}>Set Approval</button>
+            <button onClick={revokeApproval}>Revoke Approval</button>
             <button
               onClick={() =>
                 signMessage(
