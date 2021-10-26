@@ -6,6 +6,7 @@ import {
   clusterApiUrl,
   SystemProgram,
   TransactionInstruction,
+  SendOptions,
 } from "@solana/web3.js";
 import { Token } from "@solana/spl-token";
 import "./styles.css";
@@ -30,7 +31,8 @@ interface PhantomProvider {
   signTransaction: (transaction: Transaction) => Promise<Transaction>;
   signAllTransactions: (transactions: Transaction[]) => Promise<Transaction[]>;
   signAndSendTransaction: (
-    transaction: Transaction
+    transaction: Transaction,
+    options?: SendOptions
   ) => Promise<{ signature: string }>;
   signMessage: (
     message: Uint8Array | string,
