@@ -213,6 +213,21 @@ export default function App() {
     sendTransaction(transaction);
   };
 
+  const transferUSDC = async () => {
+    const transferInstruction = Token.createTransferCheckedInstruction(
+      TOKEN_PROGRAM_ID,
+      await findAssociatedTokenAddress(provider.publicKey, USDC_MINT_ADDRESS),
+      USDC_MINT_ADDRESS,
+      await findAssociatedTokenAddress(EXTERNAL_ADDRESS, USDC_MINT_ADDRESS),
+      provider.publicKey,
+      [],
+      100000,
+      6
+    );
+    const transaction = await createTransaction([transferInstruction]);
+    sendTransaction(transaction);
+  };
+
   const signMessage = async (message: string) => {
     const data = new TextEncoder().encode(message);
     try {
@@ -233,6 +248,7 @@ export default function App() {
             <div>isConnected: {provider.isConnected ? "true" : "false"}.</div>
             <button onClick={sendTransferInstruction}>Send Transaction</button>
             <button onClick={signTransferTransaction}>Sign Transaction</button>
+            <button onClick={transferUSDC}>Send USDC</button>
             <button onClick={() => signMultipleTransactions(false)}>
               Sign All Transactions (multiple){" "}
             </button>
