@@ -66,7 +66,9 @@ export default function App() {
         addLog("Disconnected from wallet");
       });
       // try to eagerly connect
-      provider.connect({ onlyIfTrusted: true });
+      provider.connect({ onlyIfTrusted: true }).catch(() => {
+        // fail silently
+      });
       return () => {
         provider.disconnect();
       };
