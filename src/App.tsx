@@ -290,6 +290,7 @@ export default function App() {
               onClick={async () => {
                 try {
                   const res = await provider.connect();
+                  console.log(res);
                   addLog(JSON.stringify(res));
                 } catch (err) {
                   console.warn(err);
@@ -299,6 +300,8 @@ export default function App() {
             >
               Connect to Phantom
             </button>
+            Can't connect? Try opening this dApp in a new window. Phantom
+            rejects requests from iframes.
           </>
         )}
         <hr />
