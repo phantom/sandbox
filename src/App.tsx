@@ -9,7 +9,7 @@ import {
 import "./styles.css";
 
 type DisplayEncoding = "utf8" | "hex";
-type PhantomEvent = "disconnect" | "connect" | "accountsChanged";
+type PhantomEvent = "disconnect" | "connect" | "accountChanged";
 type PhantomRequestMethod =
   | "connect"
   | "disconnect"
@@ -75,14 +75,14 @@ export default function App() {
       setConnected(false);
       addLog("[disconnect] 👋");
     });
-    provider.on("accountsChanged", (publicKey: PublicKey | null) => {
+    provider.on("accountChanged", (publicKey: PublicKey | null) => {
       setPublicKey(publicKey);
       if (publicKey) {
         addLog(
-          "[accountsChanged] Switched account to " + publicKey?.toBase58()
+          "[accountChanged] Switched account to " + publicKey?.toBase58()
         );
       } else {
-        addLog("[accountsChanged] Switched unknown account");
+        addLog("[accountChanged] Switched unknown account");
         // In this case, dapps could not to anything, or,
         // Only re-connecting to the new account if it is trusted
         // provider.connect({ onlyIfTrusted: true }).catch((err) => {
