@@ -78,9 +78,7 @@ export default function App() {
     provider.on("accountChanged", (publicKey: PublicKey | null) => {
       setPublicKey(publicKey);
       if (publicKey) {
-        addLog(
-          "[accountChanged] Switched account to " + publicKey?.toBase58()
-        );
+        addLog("[accountChanged] Switched account to " + publicKey?.toBase58());
       } else {
         addLog("[accountChanged] Switched unknown account");
         // In this case, dapps could not to anything, or,
@@ -89,9 +87,12 @@ export default function App() {
         //   // fail silently
         // });
         // Or, always trying to reconnect
-        provider.connect().catch((err) => {
-          // fail silently
-        });
+        provider
+          .connect()
+          .then(() => addLog("[accountChanged] Reconnected successfully"))
+          .catch((err) => {
+            addLog("[accountChanged] Failed to re-connect: " + err.message);
+          });
       }
     });
     return () => {
