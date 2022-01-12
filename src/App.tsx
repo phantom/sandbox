@@ -5,6 +5,7 @@ import {
   Transaction,
   clusterApiUrl,
   SystemProgram,
+  SendOptions,
 } from "@solana/web3.js";
 import "./styles.css";
 
@@ -30,6 +31,10 @@ interface PhantomProvider {
     message: Uint8Array | string,
     display?: DisplayEncoding
   ) => Promise<any>;
+  signAndSendTransaction: (
+    transaction: Transaction,
+    opts?: SendOptions
+  ) => Promise<{ signature: string; publicKey: PublicKey }>;
   connect: (opts?: Partial<ConnectOpts>) => Promise<{ publicKey: PublicKey }>;
   disconnect: () => Promise<void>;
   on: (event: PhantomEvent, handler: (args: any) => void) => void;
@@ -168,6 +173,23 @@ export default function App() {
       addLog("[error] signMessage: " + JSON.stringify(err));
     }
   };
+  const signAndSendTransaction = async () => {
+    try {
+      const transaction = await createTransferTransaction();
+      if (!transaction) return;
+      const { signature } = await provider.signAndSendTransaction(transaction);
+      addLog(
+        "Signed and submitted transaction " +
+          signature +
+          ", awaiting confirmation"
+      );
+      await connection.confirmTransaction(signature);
+      addLog("Transaction " + signature + " confirmed");
+    } catch (err) {
+      console.warn(err);
+      addLog("[error] signAndSendTransaction: " + JSON.stringify(err));
+    }
+  };
   return (
     <div className="App">
       <main>
@@ -195,6 +217,9 @@ export default function App() {
               }
             >
               Sign Message
+            </button>
+            <button onClick={() => signAndSendTransaction()}>
+              Sign and Send Transaction{" "}
             </button>
             <button
               onClick={async () => {
