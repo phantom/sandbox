@@ -3,7 +3,6 @@ import {
   Connection,
   PublicKey,
   Transaction,
-  clusterApiUrl,
   SystemProgram,
 } from "@solana/web3.js";
 import "./styles.css";
@@ -47,7 +46,8 @@ const getProvider = (): PhantomProvider | undefined => {
   window.open("https://phantom.app/", "_blank");
 };
 
-const NETWORK = clusterApiUrl("mainnet-beta");
+// alternatively, use clusterApiUrl("mainnet-beta");
+const NETWORK = "https://solana-api.projectserum.com";
 
 export default function App() {
   const provider = getProvider();
@@ -124,6 +124,7 @@ export default function App() {
     try {
       const transaction = await createTransferTransaction();
       if (!transaction) return;
+      addLog("sendTransaction: " + transaction);
       let signed = await provider.signTransaction(transaction);
       addLog("Got signature, submitting transaction");
       let signature = await connection.sendRawTransaction(signed.serialize());
