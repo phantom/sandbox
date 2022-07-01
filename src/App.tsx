@@ -126,12 +126,32 @@ export default function App() {
       })
     );
     transaction.feePayer = provider.publicKey;
-    addLog("Getting recent blockhash");
+    addLog("Getting latest blockhash");
     const anyTransaction: any = transaction;
     anyTransaction.recentBlockhash = (
-      await connection.getRecentBlockhash()
+      await connection.getLatestBlockhash()
     ).blockhash;
     return transaction;
+  };
+
+  // A simple helper function used to space out our signature polling
+  const pause = (ms: number) => new Promise((res) => setTimeout(res, ms));
+
+  const pollSignatureStatus = async (signature: string) => {
+    const maxPolls = 10;
+    for (let pollCount = 0; pollCount < maxPolls; pollCount++) {
+      const { value } = await connection.getSignatureStatus(signature);
+      if (value?.confirmationStatus) {
+        addLog(`Transaction ${signature} ${value.confirmationStatus}`);
+        if (
+          value.confirmationStatus === "confirmed" ||
+          value.confirmationStatus === "finalized"
+        )
+          return;
+      }
+      await pause(1000);
+    }
+    addLog(`Failed to confirm transaction ${signature}`);
   };
 
   const signAndSendTransaction = async () => {
@@ -145,8 +165,7 @@ export default function App() {
           signature +
           ", awaiting confirmation..."
       );
-      await connection.confirmTransaction(signature);
-      addLog("Transaction " + signature + " confirmed");
+      pollSignatureStatus(signature);
     } catch (err) {
       console.warn(err);
       addLog("[error] signAndSendTransaction: " + JSON.stringify(err));
