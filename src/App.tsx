@@ -4,6 +4,7 @@ import {
   PublicKey,
   Transaction,
   SystemProgram,
+  SendOptions,
 } from "@solana/web3.js";
 import "./styles.css";
 
@@ -23,6 +24,10 @@ interface ConnectOpts {
 interface PhantomProvider {
   publicKey: PublicKey | null;
   isConnected: boolean | null;
+  signAndSendTransaction: (
+    transaction: Transaction,
+    opts?: SendOptions
+  ) => Promise<{ signature: string; publicKey: PublicKey }>;
   signTransaction: (transaction: Transaction) => Promise<Transaction>;
   signAllTransactions: (transactions: Transaction[]) => Promise<Transaction[]>;
   signMessage: (
@@ -50,31 +55,37 @@ const getProvider = (): PhantomProvider | undefined => {
 const NETWORK = "https://solana-api.projectserum.com";
 
 export default function App() {
-  const provider = getProvider();
+  const [, setConnected] = useState<boolean>(false);
+  const [publicKey, setPublicKey] = useState<PublicKey | null>(null);
   const [logs, setLogs] = useState<string[]>([]);
   const addLog = useCallback(
     (log: string) => setLogs((logs) => [...logs, "> " + log]),
     []
   );
+
+  const provider = getProvider();
   const connection = new Connection(NETWORK);
-  const [, setConnected] = useState<boolean>(false);
-  const [publicKey, setPublicKey] = useState<PublicKey | null>(null);
+
   useEffect(() => {
     if (!provider) return;
+
     // try to eagerly connect
     provider.connect({ onlyIfTrusted: true }).catch((err) => {
       // fail silently
     });
+
     provider.on("connect", (publicKey: PublicKey) => {
       setPublicKey(publicKey);
       setConnected(true);
       addLog("[connect] " + publicKey?.toBase58());
     });
+
     provider.on("disconnect", () => {
       setPublicKey(null);
       setConnected(false);
       addLog("[disconnect] 👋");
     });
+
     provider.on("accountChanged", (publicKey: PublicKey | null) => {
       setPublicKey(publicKey);
       if (publicKey) {
@@ -95,10 +106,12 @@ export default function App() {
           });
       }
     });
+
     return () => {
       provider.disconnect();
     };
   }, [provider, addLog]);
+
   if (!provider) {
     return <h2>Could not find a provider</h2>;
   }
@@ -120,55 +133,73 @@ export default function App() {
     ).blockhash;
     return transaction;
   };
-  const sendTransaction = async () => {
+
+  const signAndSendTransaction = async () => {
     try {
       const transaction = await createTransferTransaction();
       if (!transaction) return;
-      addLog("sendTransaction: " + transaction);
-      let signed = await provider.signTransaction(transaction);
-      addLog("Got signature, submitting transaction");
-      let signature = await connection.sendRawTransaction(signed.serialize());
-      addLog("Submitted transaction " + signature + ", awaiting confirmation");
+      addLog("Requesting signature for: " + JSON.stringify(transaction));
+      const { signature } = await provider.signAndSendTransaction(transaction);
+      addLog(
+        "Signed and submitted transaction " +
+          signature +
+          ", awaiting confirmation..."
+      );
       await connection.confirmTransaction(signature);
       addLog("Transaction " + signature + " confirmed");
     } catch (err) {
       console.warn(err);
-      addLog("[error] sendTransaction: " + JSON.stringify(err));
+      addLog("[error] signAndSendTransaction: " + JSON.stringify(err));
     }
   };
-  const signMultipleTransactions = async (onlyFirst: boolean = false) => {
+
+  const signTransaction = async () => {
+    try {
+      const transaction = await createTransferTransaction();
+      if (!transaction) return;
+      addLog("Requesting signature for: " + JSON.stringify(transaction));
+      const signedTransaction = await provider.signTransaction(transaction);
+      addLog("Transaction signed: " + JSON.stringify(signedTransaction));
+    } catch (err) {
+      console.warn(err);
+      addLog("[error] signTransaction: " + JSON.stringify(err));
+    }
+  };
+
+  const signAllTransactions = async () => {
     try {
       const [transaction1, transaction2] = await Promise.all([
         createTransferTransaction(),
         createTransferTransaction(),
       ]);
       if (transaction1 && transaction2) {
-        let txns;
-        if (onlyFirst) {
-          txns = await provider.signAllTransactions([transaction1]);
-        } else {
-          txns = await provider.signAllTransactions([
-            transaction1,
-            transaction2,
-          ]);
-        }
-        addLog("signMultipleTransactions txns: " + JSON.stringify(txns));
+        addLog(
+          "Requesting signature for: " +
+            JSON.stringify([transaction1, transaction2])
+        );
+        const transactions = await provider.signAllTransactions([
+          transaction1,
+          transaction2,
+        ]);
+        addLog("Transactions signed: " + JSON.stringify(transactions));
       }
     } catch (err) {
       console.warn(err);
-      addLog("[error] signMultipleTransactions: " + JSON.stringify(err));
+      addLog("[error] signAllTransactions: " + JSON.stringify(err));
     }
   };
+
   const signMessage = async (message: string) => {
     try {
       const data = new TextEncoder().encode(message);
       const res = await provider.signMessage(data);
-      addLog("Message signed " + JSON.stringify(res));
+      addLog("Message signed: " + JSON.stringify(res));
     } catch (err) {
       console.warn(err);
       addLog("[error] signMessage: " + JSON.stringify(err));
     }
   };
+
   return (
     <div className="App">
       <main>
@@ -181,13 +212,11 @@ export default function App() {
               <pre>{publicKey.toBase58()}</pre>
               <br />
             </div>
-            <button onClick={sendTransaction}>Send Transaction</button>
-            <button onClick={() => signMultipleTransactions(false)}>
-              Sign All Transactions (multiple){" "}
+            <button onClick={signAndSendTransaction}>
+              Sign and Send Transaction
             </button>
-            <button onClick={() => signMultipleTransactions(true)}>
-              Sign All Transactions (single){" "}
-            </button>
+            <button onClick={signTransaction}>Sign Transaction</button>
+            <button onClick={signAllTransactions}>Sign All Transactions</button>
             <button
               onClick={() =>
                 signMessage(
