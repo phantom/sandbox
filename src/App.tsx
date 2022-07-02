@@ -35,6 +35,10 @@ const App = () => {
     [logs]
   );
 
+  const clearLogs = useCallback(() => {
+    setLogs([]);
+  }, [setLogs]);
+
   useEffect(() => {
     if (!provider) return;
 
@@ -298,6 +302,7 @@ const App = () => {
         )}
       </Main>
       <Logs logs={logs} />
+      <ClearLogsButton onClick={clearLogs}>Clear Logs</ClearLogsButton>
     </Grid>
   );
 };
@@ -319,6 +324,7 @@ const message = 'To avoid digital dognappers, sign below to authenticate with Cr
 // =============================================================================
 
 const Grid = styled.div`
+  position: relative;
   display: grid;
   grid-template-columns: 540px 1fr;
   height: 100vh;
@@ -404,4 +410,11 @@ const Button = styled.button`
   &:active {
     background-color: ${LIGHT_GRAY};
   }
+`;
+
+const ClearLogsButton = styled(Button)`
+  position: absolute;
+  top: 20px;
+  right: 20px;
+  width: 100px;
 `;
