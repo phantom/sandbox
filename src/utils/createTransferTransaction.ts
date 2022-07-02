@@ -1,7 +1,13 @@
 import { Transaction, SystemProgram, Connection } from '@solana/web3.js';
 import { PhantomProvider } from '../types';
 
-const createTransferTransaction = async (provider: PhantomProvider, connection: Connection) => {
+/**
+ * Creates an arbitrary transfer transaction
+ * @param   {PhantomProvider} provider   a Phantom provider
+ * @param   {Connection}      connection an RPC connection
+ * @returns {Transaction}                a transaction
+ */
+const createTransferTransaction = async (provider: PhantomProvider, connection: Connection): Promise<Transaction> => {
   if (!provider.publicKey) return;
 
   const transaction = new Transaction().add(
