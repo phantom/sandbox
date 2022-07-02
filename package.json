@@ -1,11 +1,14 @@
 {
-  "name": "react-typescript",
+  "name": "@phantom-labs/sandbox",
   "version": "1.0.0",
-  "description": "React and TypeScript example starter project",
+  "description": "The official CodeSandbox for learning how to interact with Phantom Wallet.",
+  "license": "MIT",
   "keywords": [
-    "typescript",
-    "react",
-    "starter"
+    "phantom",
+    "phantom wallet",
+    "phantom-wallet",
+    "solana",
+    "codesandbox"
   ],
   "main": "src/index.tsx",
   "dependencies": {
@@ -22,8 +25,7 @@
   "scripts": {
     "start": "react-scripts start",
     "build": "react-scripts build",
-    "test": "react-scripts test --env=jsdom",
-    "eject": "react-scripts eject"
+    "test": "react-scripts test --env=jsdom"
   },
   "browserslist": [
     ">0.2%",

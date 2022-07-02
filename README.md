@@ -1,3 +1,5 @@
-# sandbox
-Created with CodeSandbox
-https://r3byv.csb.app/
+# Phantom Wallet Sandbox
+
+> A CodeSandbox for learning how to interact with Phantom Wallet
+
+(https://r3byv.csb.app/)[Play with the sandbox in full view]

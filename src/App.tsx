@@ -1,97 +1,70 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useMemo } from 'react';
+import { Connection, PublicKey } from '@solana/web3.js';
+
+import './styles.css';
+
 import {
-  Connection,
-  PublicKey,
-  Transaction,
-  SystemProgram,
-  SendOptions,
-} from "@solana/web3.js";
-import "./styles.css";
+  getProvider,
+  signAllTransactions,
+  signAndSendTransaction,
+  signMessage,
+  signTransaction,
+  createTransferTransaction,
+  pollSignatureStatus,
+} from './utils';
 
-type DisplayEncoding = "utf8" | "hex";
-type PhantomEvent = "disconnect" | "connect" | "accountChanged";
-type PhantomRequestMethod =
-  | "connect"
-  | "disconnect"
-  | "signTransaction"
-  | "signAllTransactions"
-  | "signMessage";
-
-interface ConnectOpts {
-  onlyIfTrusted: boolean;
-}
-
-interface PhantomProvider {
-  publicKey: PublicKey | null;
-  isConnected: boolean | null;
-  signAndSendTransaction: (
-    transaction: Transaction,
-    opts?: SendOptions
-  ) => Promise<{ signature: string; publicKey: PublicKey }>;
-  signTransaction: (transaction: Transaction) => Promise<Transaction>;
-  signAllTransactions: (transactions: Transaction[]) => Promise<Transaction[]>;
-  signMessage: (
-    message: Uint8Array | string,
-    display?: DisplayEncoding
-  ) => Promise<any>;
-  connect: (opts?: Partial<ConnectOpts>) => Promise<{ publicKey: PublicKey }>;
-  disconnect: () => Promise<void>;
-  on: (event: PhantomEvent, handler: (args: any) => void) => void;
-  request: (method: PhantomRequestMethod, params: any) => Promise<unknown>;
-}
-
-const getProvider = (): PhantomProvider | undefined => {
-  if ("solana" in window) {
-    const anyWindow: any = window;
-    const provider = anyWindow.solana;
-    if (provider.isPhantom) {
-      return provider;
-    }
-  }
-  window.open("https://phantom.app/", "_blank");
-};
+// =============================================================================
+// Constants
+// =============================================================================
 
 // alternatively, use clusterApiUrl("mainnet-beta");
-const NETWORK = "https://solana-api.projectserum.com";
+export const NETWORK = 'https://solana-api.projectserum.com';
+const provider = getProvider();
+const connection = new Connection(NETWORK);
+const message = 'To avoid digital dognappers, sign below to authenticate with CryptoCorgis.';
 
-export default function App() {
+// =============================================================================
+// Main Component
+// =============================================================================
+
+const App = () => {
   const [, setConnected] = useState<boolean>(false);
   const [publicKey, setPublicKey] = useState<PublicKey | null>(null);
   const [logs, setLogs] = useState<string[]>([]);
-  const addLog = useCallback(
-    (log: string) => setLogs((logs) => [...logs, "> " + log]),
-    []
-  );
 
-  const provider = getProvider();
-  const connection = new Connection(NETWORK);
+  const addLog = useCallback(
+    (log: string) => {
+      return setLogs((logs) => [...logs, '> ' + log]);
+    },
+    [logs]
+  );
 
   useEffect(() => {
     if (!provider) return;
 
     // try to eagerly connect
-    provider.connect({ onlyIfTrusted: true }).catch((err) => {
+    provider.connect({ onlyIfTrusted: true }).catch((error) => {
       // fail silently
     });
 
-    provider.on("connect", (publicKey: PublicKey) => {
+    provider.on('connect', (publicKey: PublicKey) => {
       setPublicKey(publicKey);
       setConnected(true);
-      addLog("[connect] " + publicKey?.toBase58());
+      addLog(`[connect] ${publicKey?.toBase58()}`);
     });
 
-    provider.on("disconnect", () => {
+    provider.on('disconnect', () => {
       setPublicKey(null);
       setConnected(false);
-      addLog("[disconnect] 👋");
+      addLog('[disconnect] 👋');
     });
 
-    provider.on("accountChanged", (publicKey: PublicKey | null) => {
+    provider.on('accountChanged', (publicKey: PublicKey | null) => {
       setPublicKey(publicKey);
       if (publicKey) {
-        addLog("[accountChanged] Switched account to " + publicKey?.toBase58());
+        addLog(`[accountChanged] Switched account to ${publicKey?.toBase58()}`);
       } else {
-        addLog("[accountChanged] Switched unknown account");
+        addLog('[accountChanged] Switched unknown account');
         // In this case, dapps could not to anything, or,
         // Only re-connecting to the new account if it is trusted
         // provider.connect({ onlyIfTrusted: true }).catch((err) => {
@@ -100,9 +73,9 @@ export default function App() {
         // Or, always trying to reconnect
         provider
           .connect()
-          .then(() => addLog("[accountChanged] Reconnected successfully"))
-          .catch((err) => {
-            addLog("[accountChanged] Failed to re-connect: " + err.message);
+          .then(() => addLog('[accountChanged] Reconnected successfully'))
+          .catch((error) => {
+            addLog(`[accountChanged] Failed to re-connect: ${error.message}`);
           });
       }
     });
@@ -110,114 +83,117 @@ export default function App() {
     return () => {
       provider.disconnect();
     };
-  }, [provider, addLog]);
+  }, [provider]);
 
   if (!provider) {
     return <h2>Could not find a provider</h2>;
   }
 
-  const createTransferTransaction = async () => {
-    if (!provider.publicKey) return;
-    let transaction = new Transaction().add(
-      SystemProgram.transfer({
-        fromPubkey: provider.publicKey,
-        toPubkey: provider.publicKey,
-        lamports: 100,
-      })
-    );
-    transaction.feePayer = provider.publicKey;
-    addLog("Getting latest blockhash");
-    const anyTransaction: any = transaction;
-    anyTransaction.recentBlockhash = (
-      await connection.getLatestBlockhash()
-    ).blockhash;
-    return transaction;
-  };
-
-  // A simple helper function used to space out our signature polling
-  const pause = (ms: number) => new Promise((res) => setTimeout(res, ms));
-
-  const pollSignatureStatus = async (signature: string) => {
-    const maxPolls = 10;
-    for (let pollCount = 0; pollCount < maxPolls; pollCount++) {
-      const { value } = await connection.getSignatureStatus(signature);
-      if (value?.confirmationStatus) {
-        addLog(`Transaction ${signature} ${value.confirmationStatus}`);
-        if (
-          value.confirmationStatus === "confirmed" ||
-          value.confirmationStatus === "finalized"
-        )
-          return;
-      }
-      await pause(1000);
-    }
-    addLog(`Failed to confirm transaction ${signature}`);
-  };
-
-  const signAndSendTransaction = async () => {
+  /** SignAndSendTransaction */
+  const handleSignAndSendTransaction = useCallback(async () => {
     try {
-      const transaction = await createTransferTransaction();
-      if (!transaction) return;
-      addLog("Requesting signature for: " + JSON.stringify(transaction));
-      const { signature } = await provider.signAndSendTransaction(transaction);
-      addLog(
-        "Signed and submitted transaction " +
-          signature +
-          ", awaiting confirmation..."
-      );
-      pollSignatureStatus(signature);
-    } catch (err) {
-      console.warn(err);
-      addLog("[error] signAndSendTransaction: " + JSON.stringify(err));
+      const transaction = await createTransferTransaction(provider, connection);
+      addLog(`Requesting signature for: ${JSON.stringify(transaction)}`);
+      const signature = await signAndSendTransaction(provider, transaction);
+      addLog(`Signed and submitted transaction ${signature}, awaiting confirmation...`);
+      pollSignatureStatus(signature, connection, addLog);
+    } catch (error) {
+      console.warn(error);
+      addLog(`[error] signAndSendTransaction: ${JSON.stringify(error)}`);
     }
-  };
+  }, [provider, connection, addLog]);
 
-  const signTransaction = async () => {
+  /** SignTransaction */
+  const handleSignTransaction = useCallback(async () => {
     try {
-      const transaction = await createTransferTransaction();
-      if (!transaction) return;
-      addLog("Requesting signature for: " + JSON.stringify(transaction));
-      const signedTransaction = await provider.signTransaction(transaction);
-      addLog("Transaction signed: " + JSON.stringify(signedTransaction));
-    } catch (err) {
-      console.warn(err);
-      addLog("[error] signTransaction: " + JSON.stringify(err));
+      const transaction = await createTransferTransaction(provider, connection);
+      addLog(`Requesting signature for: ${JSON.stringify(transaction)}`);
+      const signedTransaction = await signTransaction(provider, transaction);
+      addLog(`Transaction signed: ${JSON.stringify(signedTransaction)}`);
+    } catch (error) {
+      console.warn(error);
+      addLog(`[error] signTransaction: ${JSON.stringify(error)}`);
     }
-  };
+  }, [provider, connection, addLog]);
 
-  const signAllTransactions = async () => {
+  /** SignAllTransactions */
+  const handleSignAllTransactions = useCallback(async () => {
     try {
-      const [transaction1, transaction2] = await Promise.all([
-        createTransferTransaction(),
-        createTransferTransaction(),
-      ]);
-      if (transaction1 && transaction2) {
-        addLog(
-          "Requesting signature for: " +
-            JSON.stringify([transaction1, transaction2])
-        );
-        const transactions = await provider.signAllTransactions([
-          transaction1,
-          transaction2,
-        ]);
-        addLog("Transactions signed: " + JSON.stringify(transactions));
-      }
-    } catch (err) {
-      console.warn(err);
-      addLog("[error] signAllTransactions: " + JSON.stringify(err));
+      const transactions = [
+        await createTransferTransaction(provider, connection),
+        await createTransferTransaction(provider, connection),
+      ];
+      addLog(`Requesting signature for: ${JSON.stringify(transactions)}`);
+      const signedTransactions = await signAllTransactions(provider, transactions[0], transactions[1]);
+      addLog(`Transactions signed: ${JSON.stringify(signedTransactions)}`);
+    } catch (error) {
+      addLog(`[error] signAllTransactions: ${JSON.stringify(error)}`);
     }
-  };
+  }, [provider, connection, addLog]);
 
-  const signMessage = async (message: string) => {
+  /** SignMessage */
+  const handleSignMessage = useCallback(async () => {
     try {
-      const data = new TextEncoder().encode(message);
-      const res = await provider.signMessage(data);
-      addLog("Message signed: " + JSON.stringify(res));
-    } catch (err) {
-      console.warn(err);
-      addLog("[error] signMessage: " + JSON.stringify(err));
+      const signedMessage = await signMessage(provider, message);
+      addLog(`Message signed: ${JSON.stringify(signedMessage)}`);
+      return signedMessage;
+    } catch (error) {
+      console.warn(error);
+      addLog(`[error] signMessage: ${JSON.stringify(error)}`);
     }
-  };
+  }, [provider, message, addLog]);
+
+  /** Connect */
+  const handleConnect = useCallback(async () => {
+    try {
+      await provider.connect();
+    } catch (error) {
+      console.warn(error);
+      addLog(`[error] connect: ${JSON.stringify(error)}`);
+    }
+  }, [provider]);
+
+  /** Disconnect */
+  const handleDisconnect = useCallback(async () => {
+    try {
+      await provider.disconnect();
+    } catch (error) {
+      console.warn(error);
+      addLog(`[error] disconnect: ${JSON.stringify(error)}`);
+    }
+  }, [provider]);
+
+  const methods = useMemo(
+    () => [
+      {
+        name: 'Sign and Send Transaction',
+        onClick: handleSignAndSendTransaction,
+      },
+      {
+        name: 'Sign Transaction',
+        onClick: handleSignTransaction,
+      },
+      {
+        name: 'Sign All Transactions',
+        onClick: handleSignAllTransactions,
+      },
+      {
+        name: 'Sign Message',
+        onClick: handleSignMessage,
+      },
+      {
+        name: 'Disconnect',
+        onClick: handleDisconnect,
+      },
+    ],
+    [
+      handleSignAndSendTransaction,
+      handleSignTransaction,
+      handleSignAllTransactions,
+      handleSignMessage,
+      handleDisconnect,
+    ]
+  );
 
   return (
     <div className="App">
@@ -231,57 +207,25 @@ export default function App() {
               <pre>{publicKey.toBase58()}</pre>
               <br />
             </div>
-            <button onClick={signAndSendTransaction}>
-              Sign and Send Transaction
-            </button>
-            <button onClick={signTransaction}>Sign Transaction</button>
-            <button onClick={signAllTransactions}>Sign All Transactions</button>
-            <button
-              onClick={() =>
-                signMessage(
-                  "To avoid digital dognappers, sign below to authenticate with CryptoCorgis."
-                )
-              }
-            >
-              Sign Message
-            </button>
-            <button
-              onClick={async () => {
-                try {
-                  await provider.disconnect();
-                } catch (err) {
-                  console.warn(err);
-                  addLog("[error] disconnect: " + JSON.stringify(err));
-                }
-              }}
-            >
-              Disconnect
-            </button>
+            {methods.map((method, i) => (
+              <button key={i} onClick={method.onClick}>
+                {method.name}
+              </button>
+            ))}
           </>
         ) : (
-          <>
-            <button
-              onClick={async () => {
-                try {
-                  await provider.connect();
-                } catch (err) {
-                  console.warn(err);
-                  addLog("[error] connect: " + JSON.stringify(err));
-                }
-              }}
-            >
-              Connect to Phantom
-            </button>
-          </>
+          <button onClick={handleConnect}>Connect to Phantom</button>
         )}
       </main>
       <footer className="logs">
         {logs.map((log, i) => (
-          <div className="log" key={i}>
+          <div key={i} className="log">
             {log}
           </div>
         ))}
       </footer>
     </div>
   );
-}
+};
+
+export default App;

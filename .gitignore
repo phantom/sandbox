@@ -1,1 +1,20 @@
+# Debugging
+npm-debug.*
+yarn-debug.*
+yarn-error.*
+.eslintcache
+
+# Dependencies
 node_modules
+
+# MacOS
+.DS_Store
+
+# Production
+build
+build.zip
+dist
+
+# VSCode
+.vscode/
+workspace*
