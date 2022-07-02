@@ -10,14 +10,21 @@ import {
   signTransaction,
   createTransferTransaction,
   pollSignatureStatus,
-  hexToRGB,
 } from './utils';
 
 import { TLog } from './types';
 
-import { GREEN, WHITE, GRAY, LIGHT_GRAY, DARK_GRAY } from './constants';
+import { Logs, Button, Sidebar, NoProvider } from './components';
 
-import Logs from './components/Logs';
+// =============================================================================
+// Constants
+// =============================================================================
+
+// alternatively, use clusterApiUrl("mainnet-beta");
+const NETWORK = 'https://solana-api.projectserum.com';
+const provider = getProvider();
+const connection = new Connection(NETWORK);
+const message = 'To avoid digital dognappers, sign below to authenticate with CryptoCorgis.';
 
 // =============================================================================
 // Main Component
@@ -122,7 +129,7 @@ const App = () => {
   }, [provider]);
 
   if (!provider) {
-    return <h2>Could not find a provider</h2>;
+    return <NoProvider />;
   }
 
   /** SignAndSendTransaction */
@@ -246,8 +253,8 @@ const App = () => {
     }
   }, [provider]);
 
-  const methods = useMemo(
-    () => [
+  const connectedMethods = useMemo(() => {
+    return [
       {
         name: 'Sign and Send Transaction',
         onClick: handleSignAndSendTransaction,
@@ -268,153 +275,35 @@ const App = () => {
         name: 'Disconnect',
         onClick: handleDisconnect,
       },
-    ],
-    [
-      handleSignAndSendTransaction,
-      handleSignTransaction,
-      handleSignAllTransactions,
-      handleSignMessage,
-      handleDisconnect,
-    ]
-  );
+    ];
+  }, [
+    handleSignAndSendTransaction,
+    handleSignTransaction,
+    handleSignAllTransactions,
+    handleSignMessage,
+    handleDisconnect,
+  ]);
 
   return (
-    <Grid>
-      <Main>
-        <Brand>
-          <img src="https://phantom.app/img/phantom-logo.svg" alt="Phantom" width="200" />
-          <Subtitle>CodeSandbox</Subtitle>
-        </Brand>
-        {provider && publicKey ? (
-          <>
-            <div>
-              <Pre>Connected as</Pre>
-              <Badge>{publicKey.toBase58()}</Badge>
-            </div>
-            {methods.map((method, i) => (
-              <Button key={i} onClick={method.onClick}>
-                {method.name}
-              </Button>
-            ))}
-          </>
-        ) : (
-          <Button onClick={handleConnect}>Connect to Phantom</Button>
-        )}
-      </Main>
-      <Logs logs={logs} />
-      <ClearLogsButton onClick={clearLogs}>Clear Logs</ClearLogsButton>
-    </Grid>
+    <StyledApp>
+      <Sidebar publicKey={publicKey} connectedMethods={connectedMethods} connect={handleConnect} />
+      <Logs logs={logs} clearLogs={clearLogs} />
+    </StyledApp>
   );
 };
 
 export default App;
 
 // =============================================================================
-// Constants
-// =============================================================================
-
-// alternatively, use clusterApiUrl("mainnet-beta");
-export const NETWORK = 'https://solana-api.projectserum.com';
-const provider = getProvider();
-const connection = new Connection(NETWORK);
-const message = 'To avoid digital dognappers, sign below to authenticate with CryptoCorgis.';
-
-// =============================================================================
 // Styled Components
 // =============================================================================
 
-const Grid = styled.div`
-  position: relative;
-  display: grid;
-  grid-template-columns: 540px 1fr;
-  height: 100vh;
+const StyledApp = styled.div`
   font-family: sans-serif;
-  background-color: #222;
-`;
-
-const Main = styled.main`
   display: flex;
-  flex-direction: column;
-  padding-top: 20px;
-  align-items: center;
-  overflow: auto;
-  > * {
-    margin-bottom: 10px;
+  flex-direction: row;
+  height: 100vh;
+  @media (max-width: 768px) {
+    flex-direction: column;
   }
-`;
-
-const Brand = styled.a.attrs({
-  href: 'https://phantom.app/',
-  target: '_blank',
-  rel: 'noopener noreferrer',
-})`
-  display: flex;
-  flex-direction: column;
-  align-items: flex-end;
-  text-decoration: none;
-  margin-bottom: 30px;
-  padding: 5px;
-  &:focus-visible {
-    outline: 2px solid ${hexToRGB(GRAY, 0.5)};
-    border-radius: 6px;
-  }
-`;
-
-const Subtitle = styled.h5`
-  color: ${GRAY};
-  font-weight: 400;
-`;
-
-const Pre = styled.pre`
-  margin-bottom: 5px;
-`;
-
-const Badge = styled.div`
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  margin-bottom: 20px;
-  padding: 10px;
-  color: ${GREEN};
-  background-color: ${hexToRGB(GREEN, 0.2)};
-  font-size: 14px;
-  border-radius: 6px;
-  width: 400px;
-  ::selection {
-    color: ${WHITE};
-    background-color: ${hexToRGB(GREEN, 0.5)};
-  }
-  ::-moz-selection {
-    color: ${WHITE};
-    background-color: ${hexToRGB(GREEN, 0.5)};
-  }
-`;
-
-const Button = styled.button`
-  cursor: pointer;
-  color: ${WHITE};
-  user-select: none;
-  font-weight: 600;
-  outline: 0;
-  width: 400px;
-  padding: 15px 10px;
-  border-radius: 6px;
-  border: 1px solid transparent;
-  background-color: ${DARK_GRAY};
-  &:hover {
-    background-color: ${hexToRGB(LIGHT_GRAY, 0.8)};
-  }
-  &:focus-visible {
-    background-color: ${hexToRGB(LIGHT_GRAY, 0.8)};
-  }
-  &:active {
-    background-color: ${LIGHT_GRAY};
-  }
-`;
-
-const ClearLogsButton = styled(Button)`
-  position: absolute;
-  top: 20px;
-  right: 20px;
-  width: 100px;
 `;

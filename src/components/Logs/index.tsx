@@ -5,19 +5,9 @@ import { TLog } from '../../types';
 
 import { BLACK } from '../../constants';
 
+import Button from '../Button';
+
 import Log from './Log';
-
-// =============================================================================
-// Styled Components
-// =============================================================================
-
-const StyledFooter = styled.footer`
-  width: 100%;
-  margin: 0;
-  padding: 20px;
-  text-align: left;
-  background-color: ${BLACK};
-`;
 
 // =============================================================================
 // Typedefs
@@ -25,6 +15,7 @@ const StyledFooter = styled.footer`
 
 interface Props {
   logs: TLog[];
+  clearLogs: () => void;
 }
 
 // =============================================================================
@@ -32,11 +23,31 @@ interface Props {
 // =============================================================================
 
 const Logs = React.memo((props: Props) => (
-  <StyledFooter>
+  <StyledSection>
     {props.logs.map((log, i) => (
       <Log key={`${log.status}-${log.method}-${i}`} {...log} />
     ))}
-  </StyledFooter>
+    <ClearLogsButton onClick={props.clearLogs}>Clear Logs</ClearLogsButton>
+  </StyledSection>
 ));
 
 export default Logs;
+
+// =============================================================================
+// Styled Components
+// =============================================================================
+
+const StyledSection = styled.section`
+  position: relative;
+  flex: 2;
+  padding: 20px;
+  background-color: ${BLACK};
+  overflow: auto;
+`;
+
+const ClearLogsButton = styled(Button)`
+  position: absolute;
+  top: 20px;
+  right: 20px;
+  width: 100px;
+`;
