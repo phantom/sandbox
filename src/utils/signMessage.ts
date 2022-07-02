@@ -13,6 +13,7 @@ const signMessage = async (provider: PhantomProvider, message: string): Promise<
     return signedMessage;
   } catch (error) {
     console.warn(error);
+    throw new Error(error.message);
   }
 };
 

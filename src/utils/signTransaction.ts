@@ -14,6 +14,7 @@ const signTransaction = async (provider: PhantomProvider, transaction: Transacti
     return signedTransaction;
   } catch (error) {
     console.warn(error);
+    throw new Error(error.message);
   }
 };
 

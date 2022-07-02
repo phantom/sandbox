@@ -98,8 +98,7 @@ const App = () => {
       addLog(`Signed and submitted transaction ${signature}, awaiting confirmation...`);
       pollSignatureStatus(signature, connection, addLog);
     } catch (error) {
-      console.warn(error);
-      addLog(`[error] signAndSendTransaction: ${JSON.stringify(error)}`);
+      addLog(`[error] signAndSendTransaction: ${error.message}`);
     }
   }, [provider, connection, addLog]);
 
@@ -111,8 +110,7 @@ const App = () => {
       const signedTransaction = await signTransaction(provider, transaction);
       addLog(`Transaction signed: ${JSON.stringify(signedTransaction)}`);
     } catch (error) {
-      console.warn(error);
-      addLog(`[error] signTransaction: ${JSON.stringify(error)}`);
+      addLog(`[error] signTransaction: ${error.message}`);
     }
   }, [provider, connection, addLog]);
 
@@ -127,7 +125,7 @@ const App = () => {
       const signedTransactions = await signAllTransactions(provider, transactions[0], transactions[1]);
       addLog(`Transactions signed: ${JSON.stringify(signedTransactions)}`);
     } catch (error) {
-      addLog(`[error] signAllTransactions: ${JSON.stringify(error)}`);
+      addLog(`[error] signAllTransactions: ${error.message}`);
     }
   }, [provider, connection, addLog]);
 
@@ -138,8 +136,7 @@ const App = () => {
       addLog(`Message signed: ${JSON.stringify(signedMessage)}`);
       return signedMessage;
     } catch (error) {
-      console.warn(error);
-      addLog(`[error] signMessage: ${JSON.stringify(error)}`);
+      addLog(`[error] signMessage: ${error.message}`);
     }
   }, [provider, message, addLog]);
 
@@ -148,8 +145,7 @@ const App = () => {
     try {
       await provider.connect();
     } catch (error) {
-      console.warn(error);
-      addLog(`[error] connect: ${JSON.stringify(error)}`);
+      addLog(`[error] connect: ${error.message}`);
     }
   }, [provider]);
 
@@ -158,8 +154,7 @@ const App = () => {
     try {
       await provider.disconnect();
     } catch (error) {
-      console.warn(error);
-      addLog(`[error] disconnect: ${JSON.stringify(error)}`);
+      addLog(`[error] disconnect: ${error.message}`);
     }
   }, [provider]);
 

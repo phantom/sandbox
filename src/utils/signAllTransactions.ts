@@ -17,8 +17,9 @@ const signAllTransactions = async (
   try {
     const transactions = await provider.signAllTransactions([transaction1, transaction2]);
     return transactions;
-  } catch (err) {
-    console.warn(err);
+  } catch (error) {
+    console.warn(error);
+    throw new Error(error.message);
   }
 };
 
