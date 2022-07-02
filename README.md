@@ -2,4 +2,4 @@
 
 > A CodeSandbox for learning how to interact with Phantom Wallet
 
-(https://r3byv.csb.app/)[Play with the sandbox in full view]
+[Play with the sandbox in full view](https://r3byv.csb.app/)
