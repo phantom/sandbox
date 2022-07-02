@@ -4,7 +4,7 @@ import { PhantomProvider } from '../types';
 
 /**
  * Signs an array of transactions
- * @param   {PhantomProvider} provider a Phantom provider
+ * @param   {PhantomProvider} provider     a Phantom provider
  * @param   {Transaction}     transaction1 a transaction to sign
  * @param   {Transaction}     transaction2 a transaction to sign
  * @returns {Transaction[]}                an array of signed transactions

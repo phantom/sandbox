@@ -1,23 +1,20 @@
-import { Transaction, SystemProgram, Connection } from '@solana/web3.js';
-import { PhantomProvider } from '../types';
+import { Transaction, SystemProgram, Connection, PublicKey } from '@solana/web3.js';
 
 /**
  * Creates an arbitrary transfer transaction
- * @param   {PhantomProvider} provider   a Phantom provider
- * @param   {Connection}      connection an RPC connection
- * @returns {Transaction}                a transaction
+ * @param   {String}      publicKey  a public key
+ * @param   {Connection}  connection an RPC connection
+ * @returns {Transaction}            a transaction
  */
-const createTransferTransaction = async (provider: PhantomProvider, connection: Connection): Promise<Transaction> => {
-  if (!provider.publicKey) return;
-
+const createTransferTransaction = async (publicKey: PublicKey, connection: Connection): Promise<Transaction> => {
   const transaction = new Transaction().add(
     SystemProgram.transfer({
-      fromPubkey: provider.publicKey,
-      toPubkey: provider.publicKey,
+      fromPubkey: publicKey,
+      toPubkey: publicKey,
       lamports: 100,
     })
   );
-  transaction.feePayer = provider.publicKey;
+  transaction.feePayer = publicKey;
 
   const anyTransaction: any = transaction;
   anyTransaction.recentBlockhash = (await connection.getLatestBlockhash()).blockhash;

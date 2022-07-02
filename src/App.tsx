@@ -1,7 +1,6 @@
 import { useState, useEffect, useCallback, useMemo } from 'react';
 import { Connection, PublicKey } from '@solana/web3.js';
-
-import './styles.css';
+import styled from 'styled-components';
 
 import {
   getProvider,
@@ -11,17 +10,14 @@ import {
   signTransaction,
   createTransferTransaction,
   pollSignatureStatus,
+  hexToRGB,
 } from './utils';
 
-// =============================================================================
-// Constants
-// =============================================================================
+import { TLog } from './types';
 
-// alternatively, use clusterApiUrl("mainnet-beta");
-export const NETWORK = 'https://solana-api.projectserum.com';
-const provider = getProvider();
-const connection = new Connection(NETWORK);
-const message = 'To avoid digital dognappers, sign below to authenticate with CryptoCorgis.';
+import { GREEN, WHITE, GRAY, LIGHT_GRAY, DARK_GRAY } from './constants';
+
+import Logs from './components/Logs';
 
 // =============================================================================
 // Main Component
@@ -30,11 +26,11 @@ const message = 'To avoid digital dognappers, sign below to authenticate with Cr
 const App = () => {
   const [, setConnected] = useState<boolean>(false);
   const [publicKey, setPublicKey] = useState<PublicKey | null>(null);
-  const [logs, setLogs] = useState<string[]>([]);
+  const [logs, setLogs] = useState<TLog[]>([]);
 
-  const addLog = useCallback(
-    (log: string) => {
-      return setLogs((logs) => [...logs, '> ' + log]);
+  const createLog = useCallback(
+    (log: TLog) => {
+      return setLogs((logs) => [...logs, log]);
     },
     [logs]
   );
@@ -50,32 +46,68 @@ const App = () => {
     provider.on('connect', (publicKey: PublicKey) => {
       setPublicKey(publicKey);
       setConnected(true);
-      addLog(`[connect] ${publicKey?.toBase58()}`);
+      createLog({
+        status: 'success',
+        method: 'connect',
+        message: `Connected to account ${publicKey.toBase58()}`,
+      });
     });
 
     provider.on('disconnect', () => {
       setPublicKey(null);
       setConnected(false);
-      addLog('[disconnect] 👋');
+      createLog({
+        status: 'warning',
+        method: 'disconnect',
+        message: '👋',
+      });
     });
 
     provider.on('accountChanged', (publicKey: PublicKey | null) => {
       setPublicKey(publicKey);
+
       if (publicKey) {
-        addLog(`[accountChanged] Switched account to ${publicKey?.toBase58()}`);
+        createLog({
+          status: 'info',
+          method: 'accountChanged',
+          message: `Switched to account ${publicKey.toBase58()}`,
+        });
       } else {
-        addLog('[accountChanged] Switched unknown account');
-        // In this case, dapps could not to anything, or,
-        // Only re-connecting to the new account if it is trusted
-        // provider.connect({ onlyIfTrusted: true }).catch((err) => {
-        //   // fail silently
-        // });
-        // Or, always trying to reconnect
+        /**
+         * In this case dApps could...
+         *
+         * 1. Not do anything
+         * 2. Only re-connect to the new account if it is trusted
+         *
+         * ```
+         * provider.connect({ onlyIfTrusted: true }).catch((err) => {
+         *  // fail silently
+         * });
+         * ```
+         *
+         * 3. Always attempt to reconnect
+         */
+        createLog({
+          status: 'warning',
+          method: 'accountChanged',
+          message: 'Switched to an unknown account',
+        });
+
         provider
           .connect()
-          .then(() => addLog('[accountChanged] Reconnected successfully'))
+          .then(() => {
+            createLog({
+              status: 'success',
+              method: 'accountChanged',
+              message: 'Re-connected successfully',
+            });
+          })
           .catch((error) => {
-            addLog(`[accountChanged] Failed to re-connect: ${error.message}`);
+            createLog({
+              status: 'error',
+              method: 'accountChanged',
+              message: `Failed to re-connect: ${error.message}`,
+            });
           });
       }
     });
@@ -92,60 +124,108 @@ const App = () => {
   /** SignAndSendTransaction */
   const handleSignAndSendTransaction = useCallback(async () => {
     try {
-      const transaction = await createTransferTransaction(provider, connection);
-      addLog(`Requesting signature for: ${JSON.stringify(transaction)}`);
+      const transaction = await createTransferTransaction(provider.publicKey, connection);
+      createLog({
+        status: 'info',
+        method: 'signAndSendTransaction',
+        message: `Requesting signature for: ${JSON.stringify(transaction)}`,
+      });
       const signature = await signAndSendTransaction(provider, transaction);
-      addLog(`Signed and submitted transaction ${signature}, awaiting confirmation...`);
-      pollSignatureStatus(signature, connection, addLog);
+      createLog({
+        status: 'info',
+        method: 'signAndSendTransaction',
+        message: `Signed and submitted transaction ${signature}, awaiting confirmation...`,
+      });
+      pollSignatureStatus(signature, connection, createLog);
     } catch (error) {
-      addLog(`[error] signAndSendTransaction: ${error.message}`);
+      createLog({
+        status: 'error',
+        method: 'signAndSendTransaction',
+        message: error.message,
+      });
     }
-  }, [provider, connection, addLog]);
+  }, [provider, connection, createLog]);
 
   /** SignTransaction */
   const handleSignTransaction = useCallback(async () => {
     try {
-      const transaction = await createTransferTransaction(provider, connection);
-      addLog(`Requesting signature for: ${JSON.stringify(transaction)}`);
+      const transaction = await createTransferTransaction(provider.publicKey, connection);
+      createLog({
+        status: 'info',
+        method: 'signTransaction',
+        message: `Requesting signature for: ${JSON.stringify(transaction)}`,
+      });
       const signedTransaction = await signTransaction(provider, transaction);
-      addLog(`Transaction signed: ${JSON.stringify(signedTransaction)}`);
+      createLog({
+        status: 'success',
+        method: 'signTransaction',
+        message: `Transaction signed: ${JSON.stringify(signedTransaction)}`,
+      });
     } catch (error) {
-      addLog(`[error] signTransaction: ${error.message}`);
+      createLog({
+        status: 'error',
+        method: 'signTransaction',
+        message: error.message,
+      });
     }
-  }, [provider, connection, addLog]);
+  }, [provider, connection, createLog]);
 
   /** SignAllTransactions */
   const handleSignAllTransactions = useCallback(async () => {
     try {
       const transactions = [
-        await createTransferTransaction(provider, connection),
-        await createTransferTransaction(provider, connection),
+        await createTransferTransaction(provider.publicKey, connection),
+        await createTransferTransaction(provider.publicKey, connection),
       ];
-      addLog(`Requesting signature for: ${JSON.stringify(transactions)}`);
+      createLog({
+        status: 'info',
+        method: 'signAllTransactions',
+        message: `Requesting signature for: ${JSON.stringify(transactions)}`,
+      });
       const signedTransactions = await signAllTransactions(provider, transactions[0], transactions[1]);
-      addLog(`Transactions signed: ${JSON.stringify(signedTransactions)}`);
+      createLog({
+        status: 'success',
+        method: 'signAllTransactions',
+        message: `Transactions signed: ${JSON.stringify(signedTransactions)}`,
+      });
     } catch (error) {
-      addLog(`[error] signAllTransactions: ${error.message}`);
+      createLog({
+        status: 'error',
+        method: 'signAllTransactions',
+        message: error.message,
+      });
     }
-  }, [provider, connection, addLog]);
+  }, [provider, connection, createLog]);
 
   /** SignMessage */
   const handleSignMessage = useCallback(async () => {
     try {
       const signedMessage = await signMessage(provider, message);
-      addLog(`Message signed: ${JSON.stringify(signedMessage)}`);
+      createLog({
+        status: 'success',
+        method: 'signMessage',
+        message: `Message signed: ${JSON.stringify(signedMessage)}`,
+      });
       return signedMessage;
     } catch (error) {
-      addLog(`[error] signMessage: ${error.message}`);
+      createLog({
+        status: 'error',
+        method: 'signMessage',
+        message: error.message,
+      });
     }
-  }, [provider, message, addLog]);
+  }, [provider, message, createLog]);
 
   /** Connect */
   const handleConnect = useCallback(async () => {
     try {
       await provider.connect();
     } catch (error) {
-      addLog(`[error] connect: ${error.message}`);
+      createLog({
+        status: 'error',
+        method: 'connect',
+        message: error.message,
+      });
     }
   }, [provider]);
 
@@ -154,7 +234,11 @@ const App = () => {
     try {
       await provider.disconnect();
     } catch (error) {
-      addLog(`[error] disconnect: ${error.message}`);
+      createLog({
+        status: 'error',
+        method: 'disconnect',
+        message: error.message,
+      });
     }
   }, [provider]);
 
@@ -191,36 +275,133 @@ const App = () => {
   );
 
   return (
-    <div className="App">
-      <main>
-        <h1>Phantom Sandbox</h1>
+    <Grid>
+      <Main>
+        <Brand>
+          <img src="https://phantom.app/img/phantom-logo.svg" alt="Phantom" width="200" />
+          <Subtitle>CodeSandbox</Subtitle>
+        </Brand>
         {provider && publicKey ? (
           <>
             <div>
-              <pre>Connected as</pre>
-              <br />
-              <pre>{publicKey.toBase58()}</pre>
-              <br />
+              <Pre>Connected as</Pre>
+              <Badge>{publicKey.toBase58()}</Badge>
             </div>
             {methods.map((method, i) => (
-              <button key={i} onClick={method.onClick}>
+              <Button key={i} onClick={method.onClick}>
                 {method.name}
-              </button>
+              </Button>
             ))}
           </>
         ) : (
-          <button onClick={handleConnect}>Connect to Phantom</button>
+          <Button onClick={handleConnect}>Connect to Phantom</Button>
         )}
-      </main>
-      <footer className="logs">
-        {logs.map((log, i) => (
-          <div key={i} className="log">
-            {log}
-          </div>
-        ))}
-      </footer>
-    </div>
+      </Main>
+      <Logs logs={logs} />
+    </Grid>
   );
 };
 
 export default App;
+
+// =============================================================================
+// Constants
+// =============================================================================
+
+// alternatively, use clusterApiUrl("mainnet-beta");
+export const NETWORK = 'https://solana-api.projectserum.com';
+const provider = getProvider();
+const connection = new Connection(NETWORK);
+const message = 'To avoid digital dognappers, sign below to authenticate with CryptoCorgis.';
+
+// =============================================================================
+// Styled Components
+// =============================================================================
+
+const Grid = styled.div`
+  display: grid;
+  grid-template-columns: 540px 1fr;
+  height: 100vh;
+  font-family: sans-serif;
+  background-color: #222;
+`;
+
+const Main = styled.main`
+  display: flex;
+  flex-direction: column;
+  padding-top: 20px;
+  align-items: center;
+  overflow: auto;
+  > * {
+    margin-bottom: 10px;
+  }
+`;
+
+const Brand = styled.a.attrs({
+  href: 'https://phantom.app/',
+  target: '_blank',
+  rel: 'noopener noreferrer',
+})`
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  text-decoration: none;
+  margin-bottom: 30px;
+  padding: 5px;
+  &:focus-visible {
+    outline: 2px solid ${hexToRGB(GRAY, 0.5)};
+    border-radius: 6px;
+  }
+`;
+
+const Subtitle = styled.h5`
+  color: ${GRAY};
+  font-weight: 400;
+`;
+
+const Pre = styled.pre`
+  margin-bottom: 5px;
+`;
+
+const Badge = styled.div`
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 20px;
+  padding: 10px;
+  color: ${GREEN};
+  background-color: ${hexToRGB(GREEN, 0.2)};
+  font-size: 14px;
+  border-radius: 6px;
+  width: 400px;
+  ::selection {
+    color: ${WHITE};
+    background-color: ${hexToRGB(GREEN, 0.5)};
+  }
+  ::-moz-selection {
+    color: ${WHITE};
+    background-color: ${hexToRGB(GREEN, 0.5)};
+  }
+`;
+
+const Button = styled.button`
+  cursor: pointer;
+  color: ${WHITE};
+  user-select: none;
+  font-weight: 600;
+  outline: 0;
+  width: 400px;
+  padding: 15px 10px;
+  border-radius: 6px;
+  border: 1px solid transparent;
+  background-color: ${DARK_GRAY};
+  &:hover {
+    background-color: ${hexToRGB(LIGHT_GRAY, 0.8)};
+  }
+  &:focus-visible {
+    background-color: ${hexToRGB(LIGHT_GRAY, 0.8)};
+  }
+  &:active {
+    background-color: ${LIGHT_GRAY};
+  }
+`;

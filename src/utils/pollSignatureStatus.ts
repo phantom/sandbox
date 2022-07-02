@@ -1,4 +1,6 @@
-import { Connection } from '@solana/web3.js';
+import { Connection, TransactionConfirmationStatus } from '@solana/web3.js';
+
+import { TLog } from '../types';
 
 import { pause } from '.';
 
@@ -8,20 +10,29 @@ const MAX_POLLS = 10;
  * Polls for transaction signature statuses
  * @param   {String}     signature  a transaction signature
  * @param   {Connection} connection an RPC connection
- * @param   {Function}   addLog     a function to add logging
+ * @param   {Function}   createLog  a function to create log
  * @returns
  */
 const pollSignatureStatus = async (
   signature: string,
   connection: Connection,
-  addLog: (log: string) => void
+  createLog: (log: TLog) => void
 ): Promise<void> => {
   for (let pollCount = 0; pollCount < MAX_POLLS; pollCount++) {
     const { value } = await connection.getSignatureStatus(signature);
+    const confirmationStatus = value?.confirmationStatus;
 
-    if (value?.confirmationStatus) {
-      addLog(`Transaction ${signature} ${value.confirmationStatus}`);
-      if (value.confirmationStatus === 'confirmed' || value.confirmationStatus === 'finalized') return;
+    if (confirmationStatus) {
+      const hasReachedSufficientCommitment = confirmationStatus === 'confirmed' || confirmationStatus === 'finalized';
+
+      createLog({
+        status: hasReachedSufficientCommitment ? 'success' : 'info',
+        method: 'signAndSendTransaction',
+        message: `Transaction: ${signature}`,
+        messageTwo: `Status: ${confirmationStatus}`,
+      });
+
+      if (hasReachedSufficientCommitment) return;
     }
 
     await pause(1000);
