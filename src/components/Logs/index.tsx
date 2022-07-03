@@ -3,11 +3,11 @@ import styled from 'styled-components';
 
 import { TLog } from '../../types';
 
-import { BLACK } from '../../constants';
+import { BLACK, GRAY } from '../../constants';
 
 import Button from '../Button';
-
 import Log from './Log';
+import Emoji from '../Emoji';
 
 // =============================================================================
 // Typedefs
@@ -22,14 +22,30 @@ interface Props {
 // Main Component
 // =============================================================================
 
-const Logs = React.memo((props: Props) => (
-  <StyledSection>
-    {props.logs.map((log, i) => (
-      <Log key={`${log.status}-${log.method}-${i}`} {...log} />
-    ))}
-    <ClearLogsButton onClick={props.clearLogs}>Clear Logs</ClearLogsButton>
-  </StyledSection>
-));
+const Logs = React.memo((props: Props) => {
+  const { logs, clearLogs } = props;
+
+  return (
+    <StyledSection>
+      {logs.length > 0 ? (
+        <>
+          {logs.map((log, i) => (
+            <Log key={`${log.status}-${log.method}-${i}`} {...log} />
+          ))}
+          <ClearLogsButton onClick={clearLogs}>Clear Logs</ClearLogsButton>
+        </>
+      ) : (
+        <Row>
+          <span>{'>'}</span>
+          <PlaceholderMessage>
+            Welcome to the Phantom sandbox. Connect to your Phantom wallet and play around...{' '}
+            <Emoji ariaLabel="Ghost Emoji">👻</Emoji>
+          </PlaceholderMessage>
+        </Row>
+      )}
+    </StyledSection>
+  );
+});
 
 export default Logs;
 
@@ -43,6 +59,7 @@ const StyledSection = styled.section`
   padding: 20px;
   background-color: ${BLACK};
   overflow: auto;
+  font-family: monospace;
 `;
 
 const ClearLogsButton = styled(Button)`
@@ -50,4 +67,17 @@ const ClearLogsButton = styled(Button)`
   top: 20px;
   right: 20px;
   width: 100px;
+`;
+
+const PlaceholderMessage = styled.p`
+  color: ${GRAY};
+`;
+
+const Row = styled.div`
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  span {
+    margin-right: 10px;
+  }
 `;

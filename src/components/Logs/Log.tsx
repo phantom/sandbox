@@ -18,7 +18,7 @@ const Log = React.memo((props: TLog) => (
       {props.method && <Method>[{props.method}]</Method>}
     </Row>
     <Message>{props.message}</Message>
-    {props.messageTwo && <Message>{props.messageTwo}</Message>}{' '}
+    {props.messageTwo && <Message>{props.messageTwo}</Message>}
   </Column>
 ));
 
@@ -33,7 +33,6 @@ const Column = styled.div`
   flex-direction: column;
   justify-content: center;
   line-height: 1.5;
-  font-family: monospace;
 `;
 
 const Row = styled.div`

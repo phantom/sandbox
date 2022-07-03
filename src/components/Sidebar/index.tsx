@@ -7,6 +7,7 @@ import { GRAY, REACT_GRAY, GREEN, PURPLE, WHITE } from '../../constants';
 import { hexToRGB } from '../../utils';
 
 import Button from '../Button';
+import Emoji from '../Emoji';
 
 // =============================================================================
 // Typedefs
@@ -44,7 +45,7 @@ const Sidebar = React.memo((props: Props) => {
               <Badge>{publicKey.toBase58()}</Badge>
             </div>
             {connectedMethods.map((method, i) => (
-              <Button key={i} onClick={method.onClick}>
+              <Button key={`${method.name}-${i}`} onClick={method.onClick}>
                 {method.name}
               </Button>
             ))}
@@ -55,11 +56,7 @@ const Sidebar = React.memo((props: Props) => {
       </Body>
       {/* 😊 💕  */}
       <Tag>
-        Made with{' '}
-        <span role="img" aria-label="Red Heart Emoji">
-          ❤️
-        </span>{' '}
-        by the <span>Phantom</span> team
+        Made with <Emoji ariaLabel="Red Heart Emoji">❤️</Emoji> by the <span>Phantom</span> team
       </Tag>
     </Main>
   );
