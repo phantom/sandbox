@@ -6,7 +6,7 @@ import { REACT_GRAY } from '../../constants';
 // Main Component
 // =============================================================================
 
-// @DEV: Let's improve this UI
+// TODO: @PHANTOM-TEAM: Let's improve this UI
 const NoProvider = () => {
   return (
     <StyledMain>

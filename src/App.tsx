@@ -99,7 +99,6 @@ const StyledApp = styled.div`
 
 /** @DEV: This is where all the fun happens */
 const useProps = () => {
-  const [, setConnected] = useState<boolean>(false);
   const [publicKey, setPublicKey] = useState<PublicKey | null>(null);
   const [logs, setLogs] = useState<TLog[]>([]);
 
@@ -124,7 +123,6 @@ const useProps = () => {
 
     provider.on('connect', (publicKey: PublicKey) => {
       setPublicKey(publicKey);
-      setConnected(true);
       createLog({
         status: 'success',
         method: 'connect',
@@ -134,7 +132,6 @@ const useProps = () => {
 
     provider.on('disconnect', () => {
       setPublicKey(null);
-      setConnected(false);
       createLog({
         status: 'warning',
         method: 'disconnect',

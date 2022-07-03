@@ -35,6 +35,7 @@ const Sidebar = React.memo((props: Props) => {
           <Subtitle>CodeSandbox</Subtitle>
         </Link>
         {publicKey ? (
+          // connected
           <>
             <div>
               <Pre>Connected as</Pre>
@@ -47,6 +48,7 @@ const Sidebar = React.memo((props: Props) => {
             ))}
           </>
         ) : (
+          // not connected
           <Button onClick={connect}>Connect to Phantom</Button>
         )}
       </Body>

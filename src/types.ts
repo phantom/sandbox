@@ -36,7 +36,7 @@ export type Status = 'success' | 'warning' | 'error' | 'info';
 
 export interface TLog {
   status: Status;
-  method?: PhantomRequestMethod | 'accountChanged';
+  method?: PhantomRequestMethod | Extract<PhantomEvent, 'accountChanged'>;
   message: string;
   messageTwo?: string;
 }
