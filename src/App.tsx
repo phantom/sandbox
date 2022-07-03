@@ -14,7 +14,7 @@ import {
 
 import { TLog } from './types';
 
-import { Logs, Button, Sidebar, NoProvider } from './components';
+import { Logs, Sidebar, NoProvider } from './components';
 
 // =============================================================================
 // Constants
