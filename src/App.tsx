@@ -172,22 +172,13 @@ const useProps = (): Props => {
           message: 'Attempting to switch accounts.',
         });
 
-        provider
-          .connect()
-          .then(() => {
-            createLog({
-              status: 'success',
-              method: 'accountChanged',
-              message: 'Re-connected successfully',
-            });
-          })
-          .catch((error) => {
-            createLog({
-              status: 'error',
-              method: 'accountChanged',
-              message: `Failed to re-connect: ${error.message}`,
-            });
+        provider.connect().catch((error) => {
+          createLog({
+            status: 'error',
+            method: 'accountChanged',
+            message: `Failed to re-connect: ${error.message}`,
           });
+        });
       }
     });
 
