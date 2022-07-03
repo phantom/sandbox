@@ -37,7 +37,7 @@ const Sidebar = React.memo((props: Props) => {
         {publicKey ? (
           // connected
           <>
-            <div style={{ overflow: 'hidden' }}>
+            <div>
               <Pre>Connected as</Pre>
               <Badge>{publicKey.toBase58()}</Badge>
               <Divider />

@@ -16,6 +16,11 @@ import { TLog } from './types';
 
 import { Logs, Sidebar, NoProvider } from './components';
 
+/**
+ * @DEVELOPERS
+ * The fun stuff is at the bottom!
+ */
+
 // =============================================================================
 // Constants
 // =============================================================================
@@ -84,7 +89,6 @@ export default App;
 // =============================================================================
 
 const StyledApp = styled.div`
-  font-family: sans-serif;
   display: flex;
   flex-direction: row;
   height: 100vh;
@@ -97,8 +101,11 @@ const StyledApp = styled.div`
 // Hooks
 // =============================================================================
 
-/** @DEV: This is where all the fun happens */
-const useProps = () => {
+/**
+ * @DEVELOPERS
+ * The fun stuff!
+ */
+const useProps = (): Props => {
   const [publicKey, setPublicKey] = useState<PublicKey | null>(null);
   const [logs, setLogs] = useState<TLog[]>([]);
 
@@ -195,6 +202,8 @@ const useProps = () => {
 
   /** SignAndSendTransaction */
   const handleSignAndSendTransaction = useCallback(async () => {
+    if (!provider) return;
+
     try {
       const transaction = await createTransferTransaction(provider.publicKey, connection);
       createLog({
@@ -220,6 +229,8 @@ const useProps = () => {
 
   /** SignTransaction */
   const handleSignTransaction = useCallback(async () => {
+    if (!provider) return;
+
     try {
       const transaction = await createTransferTransaction(provider.publicKey, connection);
       createLog({
@@ -244,6 +255,8 @@ const useProps = () => {
 
   /** SignAllTransactions */
   const handleSignAllTransactions = useCallback(async () => {
+    if (!provider) return;
+
     try {
       const transactions = [
         await createTransferTransaction(provider.publicKey, connection),
@@ -271,6 +284,7 @@ const useProps = () => {
 
   /** SignMessage */
   const handleSignMessage = useCallback(async () => {
+    if (!provider) return;
     try {
       const signedMessage = await signMessage(provider, message);
       createLog({
@@ -290,6 +304,8 @@ const useProps = () => {
 
   /** Connect */
   const handleConnect = useCallback(async () => {
+    if (!provider) return;
+
     try {
       await provider.connect();
     } catch (error) {
@@ -303,6 +319,8 @@ const useProps = () => {
 
   /** Disconnect */
   const handleDisconnect = useCallback(async () => {
+    if (!provider) return;
+
     try {
       await provider.disconnect();
     } catch (error) {
