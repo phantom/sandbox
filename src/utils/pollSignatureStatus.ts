@@ -3,7 +3,7 @@ import { Connection } from '@solana/web3.js';
 import { TLog } from '../types';
 
 const POLLING_INTERVAL = 1000; // one second
-const MAX_POLLS = 10;
+const MAX_POLLS = 30;
 
 /**
  * Polls for transaction signature statuses
@@ -56,7 +56,7 @@ const pollSignatureStatus = async (
       status: 'error',
       method: 'signAndSendTransaction',
       message: `Transaction: ${signature}`,
-      messageTwo: 'Failed to confirm transaction in time. The transaction may or may not have succeeded.',
+      messageTwo: `Failed to confirm transaction within ${MAX_POLLS} seconds. The transaction may or may not have succeeded.`,
     });
   }
 };
