@@ -1,5 +1,6 @@
 import React from 'react';
 import styled from 'styled-components';
+import { PublicKey } from '@solana/web3.js';
 
 import { TLog } from '../../types';
 
@@ -14,6 +15,7 @@ import Emoji from '../Emoji';
 // =============================================================================
 
 interface Props {
+  publicKey: PublicKey | null;
   logs: TLog[];
   clearLogs: () => void;
 }
@@ -23,7 +25,7 @@ interface Props {
 // =============================================================================
 
 const Logs = React.memo((props: Props) => {
-  const { logs, clearLogs } = props;
+  const { publicKey, logs, clearLogs } = props;
 
   return (
     <StyledSection>
@@ -38,8 +40,18 @@ const Logs = React.memo((props: Props) => {
         <Row>
           <span>{'>'}</span>
           <PlaceholderMessage>
-            Welcome to the Phantom sandbox. Connect to your Phantom wallet and play around...{' '}
-            <Emoji ariaLabel="Ghost Emoji">👻</Emoji>
+            {publicKey ? (
+              // connected
+              <>
+                Click a button and watch magic happen... <Emoji ariaLabel="Sparkles Emoji">✨</Emoji>
+              </>
+            ) : (
+              // not connected
+              <>
+                Welcome to the Phantom sandbox. Connect to your Phantom wallet and play around...{' '}
+                <Emoji ariaLabel="Ghost Emoji">👻</Emoji>
+              </>
+            )}
           </PlaceholderMessage>
         </Row>
       )}
