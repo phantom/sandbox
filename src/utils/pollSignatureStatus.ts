@@ -37,6 +37,14 @@ const pollSignatureStatus = async (
 
     await pause(1000);
   }
+
+  // Failed to confirm transaction in time
+  createLog({
+    status: 'error',
+    method: 'signAndSendTransaction',
+    message: `Transaction: ${signature}`,
+    messageTwo: 'Failed to confirm transaction in time. The transaction may or may not have succeeded.',
+  });
 };
 
 export default pollSignatureStatus;

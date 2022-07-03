@@ -106,7 +106,6 @@ const StyledApp = styled.div`
  * The fun stuff!
  */
 const useProps = (): Props => {
-  const [publicKey, setPublicKey] = useState<PublicKey | null>(null);
   const [logs, setLogs] = useState<TLog[]>([]);
 
   const createLog = useCallback(
@@ -123,13 +122,12 @@ const useProps = (): Props => {
   useEffect(() => {
     if (!provider) return;
 
-    // try to eagerly connect
-    provider.connect({ onlyIfTrusted: true }).catch((error) => {
+    // attempt to eagerly connect
+    provider.connect({ onlyIfTrusted: true }).catch(() => {
       // fail silently
     });
 
     provider.on('connect', (publicKey: PublicKey) => {
-      setPublicKey(publicKey);
       createLog({
         status: 'success',
         method: 'connect',
@@ -138,7 +136,6 @@ const useProps = (): Props => {
     });
 
     provider.on('disconnect', () => {
-      setPublicKey(null);
       createLog({
         status: 'warning',
         method: 'disconnect',
@@ -147,8 +144,6 @@ const useProps = (): Props => {
     });
 
     provider.on('accountChanged', (publicKey: PublicKey | null) => {
-      setPublicKey(publicKey);
-
       if (publicKey) {
         createLog({
           status: 'info',
@@ -170,10 +165,11 @@ const useProps = (): Props => {
          *
          * 3. Always attempt to reconnect
          */
+
         createLog({
-          status: 'warning',
+          status: 'info',
           method: 'accountChanged',
-          message: 'Switched to an unknown account',
+          message: 'Attempting to switch accounts.',
         });
 
         provider
@@ -285,6 +281,7 @@ const useProps = (): Props => {
   /** SignMessage */
   const handleSignMessage = useCallback(async () => {
     if (!provider) return;
+
     try {
       const signedMessage = await signMessage(provider, message);
       createLog({
@@ -364,7 +361,7 @@ const useProps = (): Props => {
   ]);
 
   return {
-    publicKey,
+    publicKey: provider.publicKey,
     connectedMethods,
     handleConnect,
     logs,
