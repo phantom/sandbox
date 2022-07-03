@@ -1,9 +1,8 @@
-import { Connection, TransactionConfirmationStatus } from '@solana/web3.js';
+import { Connection } from '@solana/web3.js';
 
 import { TLog } from '../types';
 
-import { pause } from '.';
-
+const POLLING_INTERVAL = 1000; // one second
 const MAX_POLLS = 10;
 
 /**
@@ -18,7 +17,9 @@ const pollSignatureStatus = async (
   connection: Connection,
   createLog: (log: TLog) => void
 ): Promise<void> => {
-  for (let pollCount = 0; pollCount < MAX_POLLS; pollCount++) {
+  let count = 0;
+
+  const interval = setInterval(async () => {
     const { value } = await connection.getSignatureStatus(signature);
     const confirmationStatus = value?.confirmationStatus;
 
@@ -32,19 +33,32 @@ const pollSignatureStatus = async (
         messageTwo: `Status: ${confirmationStatus}`,
       });
 
-      if (hasReachedSufficientCommitment) return;
+      if (hasReachedSufficientCommitment) {
+        clearInterval(interval);
+        return;
+      }
+    } else {
+      createLog({
+        status: 'warning',
+        method: 'signAndSendTransaction',
+        message: `Transaction: ${signature}`,
+        messageTwo: 'Status: Unable to retrieve confirmation status for this 1 second cycle.',
+      });
     }
 
-    await pause(1000);
-  }
+    count++;
+  }, POLLING_INTERVAL);
 
   // Failed to confirm transaction in time
-  createLog({
-    status: 'error',
-    method: 'signAndSendTransaction',
-    message: `Transaction: ${signature}`,
-    messageTwo: 'Failed to confirm transaction in time. The transaction may or may not have succeeded.',
-  });
+  if (count === MAX_POLLS) {
+    clearInterval(interval);
+    createLog({
+      status: 'error',
+      method: 'signAndSendTransaction',
+      message: `Transaction: ${signature}`,
+      messageTwo: 'Failed to confirm transaction in time. The transaction may or may not have succeeded.',
+    });
+  }
 };
 
 export default pollSignatureStatus;
