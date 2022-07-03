@@ -20,6 +20,18 @@ const pollSignatureStatus = async (
   let count = 0;
 
   const interval = setInterval(async () => {
+    // Failed to confirm transaction in time
+    if (count === MAX_POLLS) {
+      clearInterval(interval);
+      createLog({
+        status: 'error',
+        method: 'signAndSendTransaction',
+        message: `Transaction: ${signature}`,
+        messageTwo: `Failed to confirm transaction within ${MAX_POLLS} seconds. The transaction may or may not have succeeded.`,
+      });
+      return;
+    }
+
     const { value } = await connection.getSignatureStatus(signature);
     const confirmationStatus = value?.confirmationStatus;
 
@@ -48,17 +60,6 @@ const pollSignatureStatus = async (
 
     count++;
   }, POLLING_INTERVAL);
-
-  // Failed to confirm transaction in time
-  if (count === MAX_POLLS) {
-    clearInterval(interval);
-    createLog({
-      status: 'error',
-      method: 'signAndSendTransaction',
-      message: `Transaction: ${signature}`,
-      messageTwo: `Failed to confirm transaction within ${MAX_POLLS} seconds. The transaction may or may not have succeeded.`,
-    });
-  }
 };
 
 export default pollSignatureStatus;
