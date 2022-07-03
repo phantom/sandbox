@@ -1,6 +1,6 @@
-import { useState, useEffect, useCallback, useMemo } from 'react';
-import { Connection, PublicKey } from '@solana/web3.js';
+import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import styled from 'styled-components';
+import { Connection, PublicKey } from '@solana/web3.js';
 
 import {
   getProvider,
@@ -27,10 +27,78 @@ const connection = new Connection(NETWORK);
 const message = 'To avoid digital dognappers, sign below to authenticate with CryptoCorgis.';
 
 // =============================================================================
+// Typedefs
+// =============================================================================
+
+export type ConnectedMethods =
+  | {
+      name: string;
+      onClick: () => Promise<string>;
+    }
+  | {
+      name: string;
+      onClick: () => Promise<void>;
+    };
+
+interface Props {
+  publicKey: PublicKey | null;
+  connectedMethods: ConnectedMethods[];
+  handleConnect: () => Promise<void>;
+  logs: TLog[];
+  clearLogs: () => void;
+}
+
+// =============================================================================
+// Stateless Component
+// =============================================================================
+
+const StatelessApp = React.memo((props: Props) => {
+  const { publicKey, connectedMethods, handleConnect, logs, clearLogs } = props;
+
+  return (
+    <StyledApp>
+      <Sidebar publicKey={publicKey} connectedMethods={connectedMethods} connect={handleConnect} />
+      <Logs publicKey={publicKey} logs={logs} clearLogs={clearLogs} />
+    </StyledApp>
+  );
+});
+
+// =============================================================================
 // Main Component
 // =============================================================================
 
 const App = () => {
+  const props = useProps();
+
+  if (!provider) {
+    return <NoProvider />;
+  }
+
+  return <StatelessApp {...props} />;
+};
+
+export default App;
+
+// =============================================================================
+// Styled Components
+// =============================================================================
+
+const StyledApp = styled.div`
+  font-family: sans-serif;
+  display: flex;
+  flex-direction: row;
+  height: 100vh;
+  @media (max-width: 768px) {
+    flex-direction: column;
+  }
+`;
+
+// =============================================================================
+// Hooks
+// =============================================================================
+
+/** @DEV: This is where all the fun happens */
+const useProps = () => {
   const [, setConnected] = useState<boolean>(false);
   const [publicKey, setPublicKey] = useState<PublicKey | null>(null);
   const [logs, setLogs] = useState<TLog[]>([]);
@@ -39,7 +107,7 @@ const App = () => {
     (log: TLog) => {
       return setLogs((logs) => [...logs, log]);
     },
-    [logs]
+    [logs, setLogs]
   );
 
   const clearLogs = useCallback(() => {
@@ -127,10 +195,6 @@ const App = () => {
       provider.disconnect();
     };
   }, [provider]);
-
-  if (!provider) {
-    return <NoProvider />;
-  }
 
   /** SignAndSendTransaction */
   const handleSignAndSendTransaction = useCallback(async () => {
@@ -238,7 +302,7 @@ const App = () => {
         message: error.message,
       });
     }
-  }, [provider]);
+  }, [provider, createLog]);
 
   /** Disconnect */
   const handleDisconnect = useCallback(async () => {
@@ -251,7 +315,7 @@ const App = () => {
         message: error.message,
       });
     }
-  }, [provider]);
+  }, [provider, createLog]);
 
   const connectedMethods = useMemo(() => {
     return [
@@ -284,26 +348,11 @@ const App = () => {
     handleDisconnect,
   ]);
 
-  return (
-    <StyledApp>
-      <Sidebar publicKey={publicKey} connectedMethods={connectedMethods} connect={handleConnect} />
-      <Logs publicKey={publicKey} logs={logs} clearLogs={clearLogs} />
-    </StyledApp>
-  );
+  return {
+    publicKey,
+    connectedMethods,
+    handleConnect,
+    logs,
+    clearLogs,
+  };
 };
-
-export default App;
-
-// =============================================================================
-// Styled Components
-// =============================================================================
-
-const StyledApp = styled.div`
-  font-family: sans-serif;
-  display: flex;
-  flex-direction: row;
-  height: 100vh;
-  @media (max-width: 768px) {
-    flex-direction: column;
-  }
-`;

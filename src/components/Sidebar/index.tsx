@@ -8,19 +8,15 @@ import { hexToRGB } from '../../utils';
 
 import Button from '../Button';
 import Emoji from '../Emoji';
+import { ConnectedMethods } from '../../App';
 
 // =============================================================================
 // Typedefs
 // =============================================================================
 
-interface Method {
-  name: string;
-  onClick: () => Promise<string | void>;
-}
-
 interface Props {
   publicKey?: PublicKey;
-  connectedMethods: Method[];
+  connectedMethods: ConnectedMethods[];
   connect: () => Promise<void>;
 }
 
