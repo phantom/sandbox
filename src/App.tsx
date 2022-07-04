@@ -202,7 +202,7 @@ const useProps = (): Props => {
       createLog({
         status: 'info',
         method: 'signAndSendTransaction',
-        message: `Signed and submitted transaction ${signature}, awaiting confirmation...`,
+        message: `Signed and submitted transaction ${signature}.`,
       });
       pollSignatureStatus(signature, connection, createLog);
     } catch (error) {

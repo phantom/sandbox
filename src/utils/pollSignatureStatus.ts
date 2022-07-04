@@ -42,7 +42,7 @@ const pollSignatureStatus = async (
         status: hasReachedSufficientCommitment ? 'success' : 'info',
         method: 'signAndSendTransaction',
         message: `Transaction: ${signature}`,
-        messageTwo: `Status: ${confirmationStatus}`,
+        messageTwo: `Status: ${confirmationStatus.charAt(0).toUpperCase() + confirmationStatus.slice(1)}`,
       });
 
       if (hasReachedSufficientCommitment) {
@@ -51,10 +51,10 @@ const pollSignatureStatus = async (
       }
     } else {
       createLog({
-        status: 'warning',
+        status: 'info',
         method: 'signAndSendTransaction',
         message: `Transaction: ${signature}`,
-        messageTwo: 'Status: Unable to retrieve confirmation status for this 1 second cycle.',
+        messageTwo: 'Status: Waiting on confirmation...',
       });
     }
 
