@@ -85,20 +85,13 @@ const useProps = (): Props => {
 
   useEffect(() => {
     if (!provider) return;
-    console.log(provider);
 
     // attempt to eagerly connect
-    provider
-      .connect({ onlyIfTrusted: true })
-      .then(() => {
-        console.log('here');
-      })
-      .catch((err) => {
-        // fail silently
-      });
+    provider.connect({ onlyIfTrusted: true }).catch(() => {
+      // fail silently
+    });
 
     provider.on('connect', (pubkey: PublicKey) => {
-      console.log('connected');
       createLog({
         status: 'success',
         method: 'connect',
@@ -107,7 +100,6 @@ const useProps = (): Props => {
     });
 
     provider.on('disconnect', () => {
-      console.log('disconnected');
       createLog({
         status: 'warning',
         method: 'disconnect',
