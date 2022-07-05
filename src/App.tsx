@@ -1,239 +1,361 @@
-import { useState, useEffect, useCallback } from "react";
+import React, { useState, useEffect, useCallback, useMemo } from 'react';
+import styled from 'styled-components';
+import { Connection, PublicKey } from '@solana/web3.js';
+
 import {
-  Connection,
-  PublicKey,
-  Transaction,
-  SystemProgram,
-} from "@solana/web3.js";
-import "./styles.css";
+  getProvider,
+  signAllTransactions,
+  signAndSendTransaction,
+  signMessage,
+  signTransaction,
+  createTransferTransaction,
+  pollSignatureStatus,
+} from './utils';
 
-type DisplayEncoding = "utf8" | "hex";
-type PhantomEvent = "disconnect" | "connect" | "accountChanged";
-type PhantomRequestMethod =
-  | "connect"
-  | "disconnect"
-  | "signTransaction"
-  | "signAllTransactions"
-  | "signMessage";
+import { TLog } from './types';
 
-interface ConnectOpts {
-  onlyIfTrusted: boolean;
-}
+import { Logs, Sidebar, NoProvider } from './components';
 
-interface PhantomProvider {
-  publicKey: PublicKey | null;
-  isConnected: boolean | null;
-  signTransaction: (transaction: Transaction) => Promise<Transaction>;
-  signAllTransactions: (transactions: Transaction[]) => Promise<Transaction[]>;
-  signMessage: (
-    message: Uint8Array | string,
-    display?: DisplayEncoding
-  ) => Promise<any>;
-  connect: (opts?: Partial<ConnectOpts>) => Promise<{ publicKey: PublicKey }>;
-  disconnect: () => Promise<void>;
-  on: (event: PhantomEvent, handler: (args: any) => void) => void;
-  request: (method: PhantomRequestMethod, params: any) => Promise<unknown>;
-}
+/**
+ * @DEVELOPERS
+ * The fun stuff is at the bottom!
+ */
 
-const getProvider = (): PhantomProvider | undefined => {
-  if ("solana" in window) {
-    const anyWindow: any = window;
-    const provider = anyWindow.solana;
-    if (provider.isPhantom) {
-      return provider;
-    }
-  }
-  window.open("https://phantom.app/", "_blank");
-};
+// =============================================================================
+// Constants
+// =============================================================================
 
 // alternatively, use clusterApiUrl("mainnet-beta");
-const NETWORK = "https://solana-api.projectserum.com";
+const NETWORK = 'https://solana-api.projectserum.com';
+const provider = getProvider();
+const connection = new Connection(NETWORK);
+const message = 'To avoid digital dognappers, sign below to authenticate with CryptoCorgis.';
 
-export default function App() {
-  const provider = getProvider();
-  const [logs, setLogs] = useState<string[]>([]);
-  const addLog = useCallback(
-    (log: string) => setLogs((logs) => [...logs, "> " + log]),
-    []
+// =============================================================================
+// Typedefs
+// =============================================================================
+
+export type ConnectedMethods =
+  | {
+      name: string;
+      onClick: () => Promise<string>;
+    }
+  | {
+      name: string;
+      onClick: () => Promise<void>;
+    };
+
+interface Props {
+  publicKey: PublicKey | null;
+  connectedMethods: ConnectedMethods[];
+  handleConnect: () => Promise<void>;
+  logs: TLog[];
+  clearLogs: () => void;
+}
+
+// =============================================================================
+// Stateless Component
+// =============================================================================
+
+const StatelessApp = React.memo((props: Props) => {
+  const { publicKey, connectedMethods, handleConnect, logs, clearLogs } = props;
+
+  return (
+    <StyledApp>
+      <Sidebar publicKey={publicKey} connectedMethods={connectedMethods} connect={handleConnect} />
+      <Logs publicKey={publicKey} logs={logs} clearLogs={clearLogs} />
+    </StyledApp>
   );
-  const connection = new Connection(NETWORK);
-  const [, setConnected] = useState<boolean>(false);
-  const [publicKey, setPublicKey] = useState<PublicKey | null>(null);
+});
+
+// =============================================================================
+// Main Component
+// =============================================================================
+
+const App = () => {
+  const props = useProps();
+
+  if (!provider) {
+    return <NoProvider />;
+  }
+
+  return <StatelessApp {...props} />;
+};
+
+export default App;
+
+// =============================================================================
+// Styled Components
+// =============================================================================
+
+const StyledApp = styled.div`
+  display: flex;
+  flex-direction: row;
+  height: 100vh;
+  @media (max-width: 768px) {
+    flex-direction: column;
+  }
+`;
+
+// =============================================================================
+// Hooks
+// =============================================================================
+
+/**
+ * @DEVELOPERS
+ * The fun stuff!
+ */
+const useProps = (): Props => {
+  const [logs, setLogs] = useState<TLog[]>([]);
+
+  const createLog = useCallback(
+    (log: TLog) => {
+      return setLogs((logs) => [...logs, log]);
+    },
+    [logs, setLogs]
+  );
+
+  const clearLogs = useCallback(() => {
+    setLogs([]);
+  }, [setLogs]);
+
   useEffect(() => {
     if (!provider) return;
-    // try to eagerly connect
-    provider.connect({ onlyIfTrusted: true }).catch((err) => {
+
+    // attempt to eagerly connect
+    provider.connect({ onlyIfTrusted: true }).catch(() => {
       // fail silently
     });
-    provider.on("connect", (publicKey: PublicKey) => {
-      setPublicKey(publicKey);
-      setConnected(true);
-      addLog("[connect] " + publicKey?.toBase58());
+
+    provider.on('connect', (publicKey: PublicKey) => {
+      createLog({
+        status: 'success',
+        method: 'connect',
+        message: `Connected to account ${publicKey.toBase58()}`,
+      });
     });
-    provider.on("disconnect", () => {
-      setPublicKey(null);
-      setConnected(false);
-      addLog("[disconnect] 👋");
+
+    provider.on('disconnect', () => {
+      createLog({
+        status: 'warning',
+        method: 'disconnect',
+        message: '👋',
+      });
     });
-    provider.on("accountChanged", (publicKey: PublicKey | null) => {
-      setPublicKey(publicKey);
+
+    provider.on('accountChanged', (publicKey: PublicKey | null) => {
       if (publicKey) {
-        addLog("[accountChanged] Switched account to " + publicKey?.toBase58());
+        createLog({
+          status: 'info',
+          method: 'accountChanged',
+          message: `Switched to account ${publicKey.toBase58()}`,
+        });
       } else {
-        addLog("[accountChanged] Switched unknown account");
-        // In this case, dapps could not to anything, or,
-        // Only re-connecting to the new account if it is trusted
-        // provider.connect({ onlyIfTrusted: true }).catch((err) => {
-        //   // fail silently
-        // });
-        // Or, always trying to reconnect
-        provider
-          .connect()
-          .then(() => addLog("[accountChanged] Reconnected successfully"))
-          .catch((err) => {
-            addLog("[accountChanged] Failed to re-connect: " + err.message);
+        /**
+         * In this case dApps could...
+         *
+         * 1. Not do anything
+         * 2. Only re-connect to the new account if it is trusted
+         *
+         * ```
+         * provider.connect({ onlyIfTrusted: true }).catch((err) => {
+         *  // fail silently
+         * });
+         * ```
+         *
+         * 3. Always attempt to reconnect
+         */
+
+        createLog({
+          status: 'info',
+          method: 'accountChanged',
+          message: 'Attempting to switch accounts.',
+        });
+
+        provider.connect().catch((error) => {
+          createLog({
+            status: 'error',
+            method: 'accountChanged',
+            message: `Failed to re-connect: ${error.message}`,
           });
+        });
       }
     });
+
     return () => {
       provider.disconnect();
     };
-  }, [provider, addLog]);
-  if (!provider) {
-    return <h2>Could not find a provider</h2>;
-  }
+  }, [provider]);
 
-  const createTransferTransaction = async () => {
-    if (!provider.publicKey) return;
-    let transaction = new Transaction().add(
-      SystemProgram.transfer({
-        fromPubkey: provider.publicKey,
-        toPubkey: provider.publicKey,
-        lamports: 100,
-      })
-    );
-    transaction.feePayer = provider.publicKey;
-    addLog("Getting recent blockhash");
-    const anyTransaction: any = transaction;
-    anyTransaction.recentBlockhash = (
-      await connection.getRecentBlockhash()
-    ).blockhash;
-    return transaction;
-  };
-  const sendTransaction = async () => {
+  /** SignAndSendTransaction */
+  const handleSignAndSendTransaction = useCallback(async () => {
+    if (!provider) return;
+
     try {
-      const transaction = await createTransferTransaction();
-      if (!transaction) return;
-      addLog("sendTransaction: " + transaction);
-      let signed = await provider.signTransaction(transaction);
-      addLog("Got signature, submitting transaction");
-      let signature = await connection.sendRawTransaction(signed.serialize());
-      addLog("Submitted transaction " + signature + ", awaiting confirmation");
-      await connection.confirmTransaction(signature);
-      addLog("Transaction " + signature + " confirmed");
-    } catch (err) {
-      console.warn(err);
-      addLog("[error] sendTransaction: " + JSON.stringify(err));
+      const transaction = await createTransferTransaction(provider.publicKey, connection);
+      createLog({
+        status: 'info',
+        method: 'signAndSendTransaction',
+        message: `Requesting signature for: ${JSON.stringify(transaction)}`,
+      });
+      const signature = await signAndSendTransaction(provider, transaction);
+      createLog({
+        status: 'info',
+        method: 'signAndSendTransaction',
+        message: `Signed and submitted transaction ${signature}.`,
+      });
+      pollSignatureStatus(signature, connection, createLog);
+    } catch (error) {
+      createLog({
+        status: 'error',
+        method: 'signAndSendTransaction',
+        message: error.message,
+      });
     }
-  };
-  const signMultipleTransactions = async (onlyFirst: boolean = false) => {
+  }, [provider, connection, createLog]);
+
+  /** SignTransaction */
+  const handleSignTransaction = useCallback(async () => {
+    if (!provider) return;
+
     try {
-      const [transaction1, transaction2] = await Promise.all([
-        createTransferTransaction(),
-        createTransferTransaction(),
-      ]);
-      if (transaction1 && transaction2) {
-        let txns;
-        if (onlyFirst) {
-          txns = await provider.signAllTransactions([transaction1]);
-        } else {
-          txns = await provider.signAllTransactions([
-            transaction1,
-            transaction2,
-          ]);
-        }
-        addLog("signMultipleTransactions txns: " + JSON.stringify(txns));
-      }
-    } catch (err) {
-      console.warn(err);
-      addLog("[error] signMultipleTransactions: " + JSON.stringify(err));
+      const transaction = await createTransferTransaction(provider.publicKey, connection);
+      createLog({
+        status: 'info',
+        method: 'signTransaction',
+        message: `Requesting signature for: ${JSON.stringify(transaction)}`,
+      });
+      const signedTransaction = await signTransaction(provider, transaction);
+      createLog({
+        status: 'success',
+        method: 'signTransaction',
+        message: `Transaction signed: ${JSON.stringify(signedTransaction)}`,
+      });
+    } catch (error) {
+      createLog({
+        status: 'error',
+        method: 'signTransaction',
+        message: error.message,
+      });
     }
-  };
-  const signMessage = async (message: string) => {
+  }, [provider, connection, createLog]);
+
+  /** SignAllTransactions */
+  const handleSignAllTransactions = useCallback(async () => {
+    if (!provider) return;
+
     try {
-      const data = new TextEncoder().encode(message);
-      const res = await provider.signMessage(data);
-      addLog("Message signed " + JSON.stringify(res));
-    } catch (err) {
-      console.warn(err);
-      addLog("[error] signMessage: " + JSON.stringify(err));
+      const transactions = [
+        await createTransferTransaction(provider.publicKey, connection),
+        await createTransferTransaction(provider.publicKey, connection),
+      ];
+      createLog({
+        status: 'info',
+        method: 'signAllTransactions',
+        message: `Requesting signature for: ${JSON.stringify(transactions)}`,
+      });
+      const signedTransactions = await signAllTransactions(provider, transactions[0], transactions[1]);
+      createLog({
+        status: 'success',
+        method: 'signAllTransactions',
+        message: `Transactions signed: ${JSON.stringify(signedTransactions)}`,
+      });
+    } catch (error) {
+      createLog({
+        status: 'error',
+        method: 'signAllTransactions',
+        message: error.message,
+      });
     }
+  }, [provider, connection, createLog]);
+
+  /** SignMessage */
+  const handleSignMessage = useCallback(async () => {
+    if (!provider) return;
+
+    try {
+      const signedMessage = await signMessage(provider, message);
+      createLog({
+        status: 'success',
+        method: 'signMessage',
+        message: `Message signed: ${JSON.stringify(signedMessage)}`,
+      });
+      return signedMessage;
+    } catch (error) {
+      createLog({
+        status: 'error',
+        method: 'signMessage',
+        message: error.message,
+      });
+    }
+  }, [provider, message, createLog]);
+
+  /** Connect */
+  const handleConnect = useCallback(async () => {
+    if (!provider) return;
+
+    try {
+      await provider.connect();
+    } catch (error) {
+      createLog({
+        status: 'error',
+        method: 'connect',
+        message: error.message,
+      });
+    }
+  }, [provider, createLog]);
+
+  /** Disconnect */
+  const handleDisconnect = useCallback(async () => {
+    if (!provider) return;
+
+    try {
+      await provider.disconnect();
+    } catch (error) {
+      createLog({
+        status: 'error',
+        method: 'disconnect',
+        message: error.message,
+      });
+    }
+  }, [provider, createLog]);
+
+  const connectedMethods = useMemo(() => {
+    return [
+      {
+        name: 'Sign and Send Transaction',
+        onClick: handleSignAndSendTransaction,
+      },
+      {
+        name: 'Sign Transaction',
+        onClick: handleSignTransaction,
+      },
+      {
+        name: 'Sign All Transactions',
+        onClick: handleSignAllTransactions,
+      },
+      {
+        name: 'Sign Message',
+        onClick: handleSignMessage,
+      },
+      {
+        name: 'Disconnect',
+        onClick: handleDisconnect,
+      },
+    ];
+  }, [
+    handleSignAndSendTransaction,
+    handleSignTransaction,
+    handleSignAllTransactions,
+    handleSignMessage,
+    handleDisconnect,
+  ]);
+
+  return {
+    publicKey: provider?.publicKey || null,
+    connectedMethods,
+    handleConnect,
+    logs,
+    clearLogs,
   };
-  return (
-    <div className="App">
-      <main>
-        <h1>Phantom Sandbox</h1>
-        {provider && publicKey ? (
-          <>
-            <div>
-              <pre>Connected as</pre>
-              <br />
-              <pre>{publicKey.toBase58()}</pre>
-              <br />
-            </div>
-            <button onClick={sendTransaction}>Send Transaction</button>
-            <button onClick={() => signMultipleTransactions(false)}>
-              Sign All Transactions (multiple){" "}
-            </button>
-            <button onClick={() => signMultipleTransactions(true)}>
-              Sign All Transactions (single){" "}
-            </button>
-            <button
-              onClick={() =>
-                signMessage(
-                  "To avoid digital dognappers, sign below to authenticate with CryptoCorgis."
-                )
-              }
-            >
-              Sign Message
-            </button>
-            <button
-              onClick={async () => {
-                try {
-                  await provider.disconnect();
-                } catch (err) {
-                  console.warn(err);
-                  addLog("[error] disconnect: " + JSON.stringify(err));
-                }
-              }}
-            >
-              Disconnect
-            </button>
-          </>
-        ) : (
-          <>
-            <button
-              onClick={async () => {
-                try {
-                  await provider.connect();
-                } catch (err) {
-                  console.warn(err);
-                  addLog("[error] connect: " + JSON.stringify(err));
-                }
-              }}
-            >
-              Connect to Phantom
-            </button>
-          </>
-        )}
-      </main>
-      <footer className="logs">
-        {logs.map((log, i) => (
-          <div className="log" key={i}>
-            {log}
-          </div>
-        ))}
-      </footer>
-    </div>
-  );
-}
+};
