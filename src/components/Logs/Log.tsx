@@ -6,25 +6,6 @@ import { Status, TLog } from '../../types';
 import { RED, YELLOW, GREEN, BLUE, PURPLE } from '../../constants';
 
 // =============================================================================
-// Main Component
-// =============================================================================
-
-const Log = React.memo((props: TLog) => (
-  <Column>
-    <Row>
-      <StyledSpan status={props.status}>
-        {'>'} {props.status}
-      </StyledSpan>
-      {props.method && <Method>[{props.method}]</Method>}
-    </Row>
-    <Message>{props.message}</Message>
-    {props.messageTwo && <Message>{props.messageTwo}</Message>}
-  </Column>
-));
-
-export default Log;
-
-// =============================================================================
 // Styled Components
 // =============================================================================
 
@@ -65,3 +46,22 @@ const Method = styled.p`
 const Message = styled.p`
   overflow-wrap: break-word;
 `;
+
+// =============================================================================
+// Main Component
+// =============================================================================
+
+const Log = React.memo((props: TLog) => (
+  <Column>
+    <Row>
+      <StyledSpan status={props.status}>
+        {'>'} {props.status}
+      </StyledSpan>
+      {props.method && <Method>[{props.method}]</Method>}
+    </Row>
+    <Message>{props.message}</Message>
+    {props.messageTwo && <Message>{props.messageTwo}</Message>}
+  </Column>
+));
+
+export default Log;

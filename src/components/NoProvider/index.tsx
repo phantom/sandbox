@@ -1,6 +1,17 @@
+import React from 'react';
 import styled from 'styled-components';
 
 import { REACT_GRAY } from '../../constants';
+
+// =============================================================================
+// Styled Components
+// =============================================================================
+
+const StyledMain = styled.main`
+  padding: 20px;
+  height: 100vh;
+  background-color: ${REACT_GRAY};
+`;
 
 // =============================================================================
 // Main Component
@@ -14,15 +25,5 @@ const NoProvider = () => {
     </StyledMain>
   );
 };
-
-// =============================================================================
-// Styled Components
-// =============================================================================
-
-const StyledMain = styled.main`
-  padding: 20px;
-  height: 100vh;
-  background-color: ${REACT_GRAY};
-`;
 
 export default NoProvider;
