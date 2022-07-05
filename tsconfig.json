@@ -2,6 +2,9 @@
   "include": [
     "./src/**/*"
   ],
+  "exclude": [
+    "node_modules"
+  ],
   "compilerOptions": {
     "strict": false,
     "esModuleInterop": true,
