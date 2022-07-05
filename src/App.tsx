@@ -91,11 +91,11 @@ const useProps = (): Props => {
       // fail silently
     });
 
-    provider.on('connect', (pubkey: PublicKey) => {
+    provider.on('connect', (publicKey: PublicKey) => {
       createLog({
         status: 'success',
         method: 'connect',
-        message: `Connected to account ${pubkey.toBase58()}`,
+        message: `Connected to account ${publicKey.toBase58()}`,
       });
     });
 
