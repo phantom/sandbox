@@ -16,10 +16,18 @@ import { TLog } from './types';
 
 import { Logs, Sidebar, NoProvider } from './components';
 
-/**
- * @DEVELOPERS
- * The fun stuff is at the bottom!
- */
+// =============================================================================
+// Styled Components
+// =============================================================================
+
+const StyledApp = styled.div`
+  display: flex;
+  flex-direction: row;
+  height: 100vh;
+  @media (max-width: 768px) {
+    flex-direction: column;
+  }
+`;
 
 // =============================================================================
 // Constants
@@ -54,50 +62,6 @@ interface Props {
 }
 
 // =============================================================================
-// Stateless Component
-// =============================================================================
-
-const StatelessApp = React.memo((props: Props) => {
-  const { publicKey, connectedMethods, handleConnect, logs, clearLogs } = props;
-
-  return (
-    <StyledApp>
-      <Sidebar publicKey={publicKey} connectedMethods={connectedMethods} connect={handleConnect} />
-      <Logs publicKey={publicKey} logs={logs} clearLogs={clearLogs} />
-    </StyledApp>
-  );
-});
-
-// =============================================================================
-// Main Component
-// =============================================================================
-
-const App = () => {
-  const props = useProps();
-
-  if (!provider) {
-    return <NoProvider />;
-  }
-
-  return <StatelessApp {...props} />;
-};
-
-export default App;
-
-// =============================================================================
-// Styled Components
-// =============================================================================
-
-const StyledApp = styled.div`
-  display: flex;
-  flex-direction: row;
-  height: 100vh;
-  @media (max-width: 768px) {
-    flex-direction: column;
-  }
-`;
-
-// =============================================================================
 // Hooks
 // =============================================================================
 
@@ -112,7 +76,7 @@ const useProps = (): Props => {
     (log: TLog) => {
       return setLogs((logs) => [...logs, log]);
     },
-    [logs, setLogs]
+    [setLogs]
   );
 
   const clearLogs = useCallback(() => {
@@ -185,7 +149,7 @@ const useProps = (): Props => {
     return () => {
       provider.disconnect();
     };
-  }, [provider]);
+  }, [createLog]);
 
   /** SignAndSendTransaction */
   const handleSignAndSendTransaction = useCallback(async () => {
@@ -212,7 +176,7 @@ const useProps = (): Props => {
         message: error.message,
       });
     }
-  }, [provider, connection, createLog]);
+  }, [createLog]);
 
   /** SignTransaction */
   const handleSignTransaction = useCallback(async () => {
@@ -238,7 +202,7 @@ const useProps = (): Props => {
         message: error.message,
       });
     }
-  }, [provider, connection, createLog]);
+  }, [createLog]);
 
   /** SignAllTransactions */
   const handleSignAllTransactions = useCallback(async () => {
@@ -267,7 +231,7 @@ const useProps = (): Props => {
         message: error.message,
       });
     }
-  }, [provider, connection, createLog]);
+  }, [createLog]);
 
   /** SignMessage */
   const handleSignMessage = useCallback(async () => {
@@ -288,7 +252,7 @@ const useProps = (): Props => {
         message: error.message,
       });
     }
-  }, [provider, message, createLog]);
+  }, [createLog]);
 
   /** Connect */
   const handleConnect = useCallback(async () => {
@@ -303,7 +267,7 @@ const useProps = (): Props => {
         message: error.message,
       });
     }
-  }, [provider, createLog]);
+  }, [createLog]);
 
   /** Disconnect */
   const handleDisconnect = useCallback(async () => {
@@ -318,7 +282,7 @@ const useProps = (): Props => {
         message: error.message,
       });
     }
-  }, [provider, createLog]);
+  }, [createLog]);
 
   const connectedMethods = useMemo(() => {
     return [
@@ -359,3 +323,34 @@ const useProps = (): Props => {
     clearLogs,
   };
 };
+
+// =============================================================================
+// Stateless Component
+// =============================================================================
+
+const StatelessApp = React.memo((props: Props) => {
+  const { publicKey, connectedMethods, handleConnect, logs, clearLogs } = props;
+
+  return (
+    <StyledApp>
+      <Sidebar publicKey={publicKey} connectedMethods={connectedMethods} connect={handleConnect} />
+      <Logs publicKey={publicKey} logs={logs} clearLogs={clearLogs} />
+    </StyledApp>
+  );
+});
+
+// =============================================================================
+// Main Component
+// =============================================================================
+
+const App = () => {
+  const props = useProps();
+
+  if (!provider) {
+    return <NoProvider />;
+  }
+
+  return <StatelessApp {...props} />;
+};
+
+export default App;

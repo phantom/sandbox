@@ -7,61 +7,7 @@ import { GRAY, REACT_GRAY, PURPLE, WHITE, DARK_GRAY } from '../../constants';
 import { hexToRGB } from '../../utils';
 
 import Button from '../Button';
-import Emoji from '../Emoji';
 import { ConnectedMethods } from '../../App';
-
-// =============================================================================
-// Typedefs
-// =============================================================================
-
-interface Props {
-  publicKey?: PublicKey;
-  connectedMethods: ConnectedMethods[];
-  connect: () => Promise<void>;
-}
-
-// =============================================================================
-// Main Component
-// =============================================================================
-
-const Sidebar = React.memo((props: Props) => {
-  const { publicKey, connectedMethods, connect } = props;
-
-  return (
-    <Main>
-      <Body>
-        <Link>
-          <img src="https://phantom.app/img/phantom-logo.svg" alt="Phantom" width="200" />
-          <Subtitle>CodeSandbox</Subtitle>
-        </Link>
-        {publicKey ? (
-          // connected
-          <>
-            <div>
-              <Pre>Connected as</Pre>
-              <Badge>{publicKey.toBase58()}</Badge>
-              <Divider />
-            </div>
-            {connectedMethods.map((method, i) => (
-              <Button key={`${method.name}-${i}`} onClick={method.onClick}>
-                {method.name}
-              </Button>
-            ))}
-          </>
-        ) : (
-          // not connected
-          <Button onClick={connect}>Connect to Phantom</Button>
-        )}
-      </Body>
-      {/* 😊 💕  */}
-      <Tag>
-        Made with <Emoji ariaLabel="Red Heart Emoji">❤️</Emoji> by the <span>Phantom</span> team
-      </Tag>
-    </Main>
-  );
-});
-
-export default Sidebar;
 
 // =============================================================================
 // Styled Components
@@ -182,3 +128,60 @@ const Tag = styled.p`
     background-color: ${hexToRGB(PURPLE, 0.5)};
   }
 `;
+
+// =============================================================================
+// Typedefs
+// =============================================================================
+
+interface Props {
+  publicKey?: PublicKey;
+  connectedMethods: ConnectedMethods[];
+  connect: () => Promise<void>;
+}
+
+// =============================================================================
+// Main Component
+// =============================================================================
+
+const Sidebar = React.memo((props: Props) => {
+  const { publicKey, connectedMethods, connect } = props;
+
+  return (
+    <Main>
+      <Body>
+        <Link>
+          <img src="https://phantom.app/img/phantom-logo.svg" alt="Phantom" width="200" />
+          <Subtitle>CodeSandbox</Subtitle>
+        </Link>
+        {publicKey ? (
+          // connected
+          <>
+            <div>
+              <Pre>Connected as</Pre>
+              <Badge>{publicKey.toBase58()}</Badge>
+              <Divider />
+            </div>
+            {connectedMethods.map((method, i) => (
+              <Button key={`${method.name}-${i}`} onClick={method.onClick}>
+                {method.name}
+              </Button>
+            ))}
+          </>
+        ) : (
+          // not connected
+          <Button onClick={connect}>Connect to Phantom</Button>
+        )}
+      </Body>
+      {/* 😊 💕  */}
+      <Tag>
+        Made with{' '}
+        <span role="img" aria-label="Red Heart Emoji">
+          ❤️
+        </span>{' '}
+        by the <span>Phantom</span> team
+      </Tag>
+    </Main>
+  );
+});
+
+export default Sidebar;
