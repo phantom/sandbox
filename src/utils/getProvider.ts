@@ -5,11 +5,11 @@ import { PhantomProvider } from '../types';
  * @returns {PhantomProvider | undefined} a Phantom provider if one exists in the window
  */
 const getProvider = (): PhantomProvider | undefined => {
-  if ('solana' in window) {
+  if ('phantom' in window) {
     const anyWindow: any = window;
-    const provider = anyWindow.solana;
+    const provider = anyWindow.phantom?.solana;
 
-    if (provider.isPhantom) {
+    if (provider?.isPhantom) {
       return provider;
     }
   }
