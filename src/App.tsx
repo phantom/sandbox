@@ -5,7 +5,7 @@
  */
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import styled from 'styled-components';
-import { Connection, PublicKey } from '@solana/web3.js';
+import { clusterApiUrl, Connection, PublicKey } from '@solana/web3.js';
 
 import {
   getProvider,
@@ -38,8 +38,8 @@ const StyledApp = styled.div`
 // Constants
 // =============================================================================
 
-// alternatively, use clusterApiUrl("mainnet-beta");
-const NETWORK = 'https://solana-api.projectserum.com';
+// alternatively, use 'https://solana-api.projectserum.com' for demo purposes only
+const NETWORK = clusterApiUrl('mainnet-beta');
 const provider = getProvider();
 const connection = new Connection(NETWORK);
 const message = 'To avoid digital dognappers, sign below to authenticate with CryptoCorgis.';
