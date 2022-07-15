@@ -105,8 +105,9 @@ const Divider = styled.div`
 const Tag = styled.p`
   text-align: center;
   color: ${GRAY};
-  span {
+  a {
     color: ${PURPLE};
+    text-decoration: none;
     ::selection {
       color: ${WHITE};
       background-color: ${hexToRGB(PURPLE, 0.5)};
@@ -178,7 +179,7 @@ const Sidebar = React.memo((props: Props) => {
         <span role="img" aria-label="Red Heart Emoji">
           ❤️
         </span>{' '}
-        by the <span>Phantom</span> team
+        by the <a href="https://phantom.app">Phantom</a> team
       </Tag>
     </Main>
   );
