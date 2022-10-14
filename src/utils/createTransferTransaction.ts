@@ -6,16 +6,21 @@ import { Connection, PublicKey, SystemProgram, TransactionMessage, VersionedTran
  * @param   {Connection}  connection an RPC connection
  * @returns {VersionedTransaction}            a transaction
  */
-const createTransferTransaction = async (publicKey: PublicKey, connection: Connection): Promise<VersionedTransaction> => {
+const createTransferTransaction = async (
+  publicKey: PublicKey,
+  connection: Connection
+): Promise<VersionedTransaction> => {
   const txMsg = new TransactionMessage({
-    instructions: [SystemProgram.transfer({
-      fromPubkey: publicKey,
-      toPubkey: publicKey,
-      lamports: 100,
-    })],
+    instructions: [
+      SystemProgram.transfer({
+        fromPubkey: publicKey,
+        toPubkey: publicKey,
+        lamports: 100,
+      }),
+    ],
     payerKey: publicKey,
-    recentBlockhash: (await connection.getLatestBlockhash()).blockhash
-  })
+    recentBlockhash: (await connection.getLatestBlockhash()).blockhash,
+  });
   const transaction = new VersionedTransaction(txMsg.compileToV0Message());
 
   const anyTransaction: any = transaction;

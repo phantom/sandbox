@@ -20,11 +20,13 @@ export interface PhantomProvider {
   publicKey: PublicKey | null;
   isConnected: boolean | null;
   signAndSendTransaction: (
-    transaction: Transaction| VersionedTransaction,
+    transaction: Transaction | VersionedTransaction,
     opts?: SendOptions
   ) => Promise<{ signature: string; publicKey: PublicKey }>;
-  signTransaction: (transaction: Transaction| VersionedTransaction) => Promise<Transaction| VersionedTransaction>;
-  signAllTransactions: (transactions: Transaction[]|VersionedTransaction[]) => Promise<Transaction[]|VersionedTransaction[]>;
+  signTransaction: (transaction: Transaction | VersionedTransaction) => Promise<Transaction | VersionedTransaction>;
+  signAllTransactions: (
+    transactions: Transaction[] | VersionedTransaction[]
+  ) => Promise<Transaction[] | VersionedTransaction[]>;
   signMessage: (message: Uint8Array | string, display?: DisplayEncoding) => Promise<any>;
   connect: (opts?: Partial<ConnectOpts>) => Promise<{ publicKey: PublicKey }>;
   disconnect: () => Promise<void>;

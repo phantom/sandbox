@@ -8,7 +8,10 @@ import { PhantomProvider } from '../types';
  * @param   {Transaction}     transaction a transaction to sign
  * @returns {Transaction}                 a signed transaction
  */
-const signAndSendTransaction = async (provider: PhantomProvider, transaction: Transaction| VersionedTransaction): Promise<string> => {
+const signAndSendTransaction = async (
+  provider: PhantomProvider,
+  transaction: Transaction | VersionedTransaction
+): Promise<string> => {
   try {
     const { signature } = await provider.signAndSendTransaction(transaction);
     return signature;
