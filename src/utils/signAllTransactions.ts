@@ -1,4 +1,4 @@
-import { Transaction } from '@solana/web3.js';
+import { Transaction, VersionedTransaction } from '@solana/web3.js';
 
 import { PhantomProvider } from '../types';
 
@@ -11,11 +11,12 @@ import { PhantomProvider } from '../types';
  */
 const signAllTransactions = async (
   provider: PhantomProvider,
-  transaction1: Transaction,
-  transaction2: Transaction
-): Promise<Transaction[]> => {
+  transaction1: Transaction | VersionedTransaction,
+  transaction2: Transaction | VersionedTransaction
+): Promise<Transaction[] | VersionedTransaction[]> => {
   try {
-    const transactions = await provider.signAllTransactions([transaction1, transaction2]);
+    let txs: any = [transaction1, transaction2];
+    const transactions = await provider.signAllTransactions(txs);
     return transactions;
   } catch (error) {
     console.warn(error);

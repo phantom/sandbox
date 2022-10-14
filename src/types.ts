@@ -1,4 +1,4 @@
-import { PublicKey, Transaction, SendOptions } from '@solana/web3.js';
+import { PublicKey, Transaction, SendOptions, VersionedTransaction } from '@solana/web3.js';
 
 type DisplayEncoding = 'utf8' | 'hex';
 
@@ -20,11 +20,11 @@ export interface PhantomProvider {
   publicKey: PublicKey | null;
   isConnected: boolean | null;
   signAndSendTransaction: (
-    transaction: Transaction,
+    transaction: Transaction| VersionedTransaction,
     opts?: SendOptions
   ) => Promise<{ signature: string; publicKey: PublicKey }>;
-  signTransaction: (transaction: Transaction) => Promise<Transaction>;
-  signAllTransactions: (transactions: Transaction[]) => Promise<Transaction[]>;
+  signTransaction: (transaction: Transaction| VersionedTransaction) => Promise<Transaction| VersionedTransaction>;
+  signAllTransactions: (transactions: Transaction[]|VersionedTransaction[]) => Promise<Transaction[]|VersionedTransaction[]>;
   signMessage: (message: Uint8Array | string, display?: DisplayEncoding) => Promise<any>;
   connect: (opts?: Partial<ConnectOpts>) => Promise<{ publicKey: PublicKey }>;
   disconnect: () => Promise<void>;
