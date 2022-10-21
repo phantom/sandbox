@@ -11,9 +11,11 @@ import {
   getProvider,
   signAllTransactions,
   signAndSendTransaction,
+  signAndSendTransactionV0WithLookupTable,
   signMessage,
   signTransaction,
   createTransferTransaction,
+  createTransferTransactionV0,
   pollSignatureStatus,
 } from './utils';
 
@@ -183,6 +185,54 @@ const useProps = (): Props => {
     }
   }, [createLog]);
 
+  /** SignAndSendTransactionV0 */
+  const handleSignAndSendTransactionV0 = useCallback(async () => {
+    if (!provider) return;
+
+    try {
+      const transactionV0 = await createTransferTransactionV0(provider.publicKey, connection);
+      createLog({
+        status: 'info',
+        method: 'signAndSendTransactionV0',
+        message: `Requesting signature for: ${JSON.stringify(transactionV0)}`,
+      });
+      const signature = await signAndSendTransaction(provider, transactionV0);
+      createLog({
+        status: 'info',
+        method: 'signAndSendTransactionV0',
+        message: `Signed and submitted transactionV0 ${signature}.`,
+      });
+      pollSignatureStatus(signature, connection, createLog);
+    } catch (error) {
+      createLog({
+        status: 'error',
+        method: 'signAndSendTransactionV0',
+        message: error.message,
+      });
+    }
+  }, [createLog]);
+
+  /** SignAndSendTransactionV0WithLookupTable */
+  const handleSignAndSendTransactionV0WithLookupTable = useCallback(async () => {
+    if (!provider) return;
+
+    try {
+      const signature = await signAndSendTransactionV0WithLookupTable(provider, provider.publicKey, connection);
+      createLog({
+        status: 'info',
+        method: 'signAndSendTransactionV0WithLookupTable',
+        message: `Signed and submitted transactionV0 with Address Lookup Table ${signature}.`,
+      });
+      pollSignatureStatus(signature, connection, createLog);
+    } catch (error) {
+      createLog({
+        status: 'error',
+        method: 'signAndSendTransactionV0WithLookupTable',
+        message: error.message,
+      });
+    }
+  }, [createLog]);
+
   /** SignTransaction */
   const handleSignTransaction = useCallback(async () => {
     if (!provider) return;
@@ -296,6 +346,14 @@ const useProps = (): Props => {
         onClick: handleSignAndSendTransaction,
       },
       {
+        name: 'Sign and Send Versioned Transaction',
+        onClick: handleSignAndSendTransactionV0,
+      },
+      {
+        name: 'Sign and Send Versioned Transaction with an Address Lookup Table',
+        onClick: handleSignAndSendTransactionV0WithLookupTable,
+      },
+      {
         name: 'Sign Transaction',
         onClick: handleSignTransaction,
       },
@@ -314,6 +372,8 @@ const useProps = (): Props => {
     ];
   }, [
     handleSignAndSendTransaction,
+    handleSignAndSendTransactionV0,
+    handleSignAndSendTransactionV0WithLookupTable,
     handleSignTransaction,
     handleSignAllTransactions,
     handleSignMessage,
