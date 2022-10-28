@@ -8,15 +8,17 @@ import styled from 'styled-components';
 import { clusterApiUrl, Connection, PublicKey } from '@solana/web3.js';
 
 import {
+  createAddressLookupTable,
+  createTransferTransaction,
+  createTransferTransactionV0,
+  extendAddressLookupTable,
   getProvider,
+  pollSignatureStatus,
   signAllTransactions,
   signAndSendTransaction,
   signAndSendTransactionV0WithLookupTable,
   signMessage,
   signTransaction,
-  createTransferTransaction,
-  createTransferTransactionV0,
-  pollSignatureStatus,
 } from './utils';
 
 import { TLog } from './types';
@@ -215,9 +217,39 @@ const useProps = (): Props => {
   /** SignAndSendTransactionV0WithLookupTable */
   const handleSignAndSendTransactionV0WithLookupTable = useCallback(async () => {
     if (!provider) return;
-
+    let blockhash = await connection.getLatestBlockhash().then((res) => res.blockhash);
     try {
-      const signature = await signAndSendTransactionV0WithLookupTable(provider, provider.publicKey, connection);
+      const [lookupSignature, lookupTableAddress] = await createAddressLookupTable(
+        provider,
+        provider.publicKey,
+        connection,
+        blockhash
+      );
+      createLog({
+        status: 'info',
+        method: 'signAndSendTransactionV0WithLookupTable',
+        message: `Signed and submitted transactionV0 to make an Address Lookup Table ${lookupTableAddress} with signature: ${lookupSignature}. Please wait for 5-7 seconds after signing the next transaction to be able to see the next transaction popup. This time is needed as newly appended addresses require one slot to warmup before being available to transactions for lookups.`,
+      });
+      const extensionSignature = await extendAddressLookupTable(
+        provider,
+        provider.publicKey,
+        connection,
+        blockhash,
+        lookupTableAddress
+      );
+      createLog({
+        status: 'info',
+        method: 'signAndSendTransactionV0WithLookupTable',
+        message: `Signed and submitted transactionV0 to extend Address Lookup Table ${extensionSignature}.`,
+      });
+
+      const signature = await signAndSendTransactionV0WithLookupTable(
+        provider,
+        provider.publicKey,
+        connection,
+        blockhash,
+        lookupTableAddress
+      );
       createLog({
         status: 'info',
         method: 'signAndSendTransactionV0WithLookupTable',
@@ -342,15 +374,15 @@ const useProps = (): Props => {
   const connectedMethods = useMemo(() => {
     return [
       {
-        name: 'Sign and Send Transaction',
+        name: 'Sign and Send Transaction (Legacy)',
         onClick: handleSignAndSendTransaction,
       },
       {
-        name: 'Sign and Send Versioned Transaction',
+        name: 'Sign and Send Transaction (v0)',
         onClick: handleSignAndSendTransactionV0,
       },
       {
-        name: 'Sign and Send Versioned Transaction with an Address Lookup Table',
+        name: 'Sign and Send Transaction (v0 + Lookup table)',
         onClick: handleSignAndSendTransactionV0WithLookupTable,
       },
       {

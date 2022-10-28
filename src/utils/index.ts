@@ -1,5 +1,7 @@
+export { default as createAddressLookupTable } from './createAddressLookupTable';
 export { default as createTransferTransaction } from './createTransferTransaction';
 export { default as createTransferTransactionV0 } from './createTransferTransactionV0';
+export { default as extendAddressLookupTable } from './extendAddressLookupTable';
 export { default as getProvider } from './getProvider';
 export { default as hexToRGB } from './hexToRGB';
 export { default as pollSignatureStatus } from './pollSignatureStatus';
