@@ -8,13 +8,17 @@ import styled from 'styled-components';
 import { clusterApiUrl, Connection, PublicKey } from '@solana/web3.js';
 
 import {
+  createAddressLookupTable,
+  createTransferTransaction,
+  createTransferTransactionV0,
+  extendAddressLookupTable,
   getProvider,
+  pollSignatureStatus,
   signAllTransactions,
   signAndSendTransaction,
+  signAndSendTransactionV0WithLookupTable,
   signMessage,
   signTransaction,
-  createTransferTransaction,
-  pollSignatureStatus,
 } from './utils';
 
 import { TLog } from './types';
@@ -183,6 +187,84 @@ const useProps = (): Props => {
     }
   }, [createLog]);
 
+  /** SignAndSendTransactionV0 */
+  const handleSignAndSendTransactionV0 = useCallback(async () => {
+    if (!provider) return;
+
+    try {
+      const transactionV0 = await createTransferTransactionV0(provider.publicKey, connection);
+      createLog({
+        status: 'info',
+        method: 'signAndSendTransactionV0',
+        message: `Requesting signature for: ${JSON.stringify(transactionV0)}`,
+      });
+      const signature = await signAndSendTransaction(provider, transactionV0);
+      createLog({
+        status: 'info',
+        method: 'signAndSendTransactionV0',
+        message: `Signed and submitted transactionV0 ${signature}.`,
+      });
+      pollSignatureStatus(signature, connection, createLog);
+    } catch (error) {
+      createLog({
+        status: 'error',
+        method: 'signAndSendTransactionV0',
+        message: error.message,
+      });
+    }
+  }, [createLog]);
+
+  /** SignAndSendTransactionV0WithLookupTable */
+  const handleSignAndSendTransactionV0WithLookupTable = useCallback(async () => {
+    if (!provider) return;
+    let blockhash = await connection.getLatestBlockhash().then((res) => res.blockhash);
+    try {
+      const [lookupSignature, lookupTableAddress] = await createAddressLookupTable(
+        provider,
+        provider.publicKey,
+        connection,
+        blockhash
+      );
+      createLog({
+        status: 'info',
+        method: 'signAndSendTransactionV0WithLookupTable',
+        message: `Signed and submitted transactionV0 to make an Address Lookup Table ${lookupTableAddress} with signature: ${lookupSignature}. Please wait for 5-7 seconds after signing the next transaction to be able to see the next transaction popup. This time is needed as newly appended addresses require one slot to warmup before being available to transactions for lookups.`,
+      });
+      const extensionSignature = await extendAddressLookupTable(
+        provider,
+        provider.publicKey,
+        connection,
+        blockhash,
+        lookupTableAddress
+      );
+      createLog({
+        status: 'info',
+        method: 'signAndSendTransactionV0WithLookupTable',
+        message: `Signed and submitted transactionV0 to extend Address Lookup Table ${extensionSignature}.`,
+      });
+
+      const signature = await signAndSendTransactionV0WithLookupTable(
+        provider,
+        provider.publicKey,
+        connection,
+        blockhash,
+        lookupTableAddress
+      );
+      createLog({
+        status: 'info',
+        method: 'signAndSendTransactionV0WithLookupTable',
+        message: `Signed and submitted transactionV0 with Address Lookup Table ${signature}.`,
+      });
+      pollSignatureStatus(signature, connection, createLog);
+    } catch (error) {
+      createLog({
+        status: 'error',
+        method: 'signAndSendTransactionV0WithLookupTable',
+        message: error.message,
+      });
+    }
+  }, [createLog]);
+
   /** SignTransaction */
   const handleSignTransaction = useCallback(async () => {
     if (!provider) return;
@@ -292,8 +374,16 @@ const useProps = (): Props => {
   const connectedMethods = useMemo(() => {
     return [
       {
-        name: 'Sign and Send Transaction',
+        name: 'Sign and Send Transaction (Legacy)',
         onClick: handleSignAndSendTransaction,
+      },
+      {
+        name: 'Sign and Send Transaction (v0)',
+        onClick: handleSignAndSendTransactionV0,
+      },
+      {
+        name: 'Sign and Send Transaction (v0 + Lookup table)',
+        onClick: handleSignAndSendTransactionV0WithLookupTable,
       },
       {
         name: 'Sign Transaction',
@@ -314,6 +404,8 @@ const useProps = (): Props => {
     ];
   }, [
     handleSignAndSendTransaction,
+    handleSignAndSendTransactionV0,
+    handleSignAndSendTransactionV0WithLookupTable,
     handleSignTransaction,
     handleSignAllTransactions,
     handleSignMessage,
