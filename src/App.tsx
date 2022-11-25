@@ -42,8 +42,7 @@ const StyledApp = styled.div`
 // Constants
 // =============================================================================
 
-// alternatively, use 'https://solana-api.projectserum.com' for demo purposes only
-const NETWORK = clusterApiUrl('mainnet-beta');
+const NETWORK = clusterApiUrl('devnet');
 const provider = getProvider();
 const connection = new Connection(NETWORK);
 const message = 'To avoid digital dognappers, sign below to authenticate with CryptoCorgis.';
