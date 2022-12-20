@@ -43,7 +43,7 @@ const StyledApp = styled.div`
 // =============================================================================
 
 // NB: This URL will only work for Phantom sandbox apps! Please do not use this for your project.
-const NETWORK = 'http://phantom-phantom-f0ad.mainnet.rpcpool.com/';
+const NETWORK = 'https://phantom-phantom-f0ad.mainnet.rpcpool.com/';
 const provider = getProvider();
 const connection = new Connection(NETWORK);
 const message = 'To avoid digital dognappers, sign below to authenticate with CryptoCorgis.';
