@@ -5,7 +5,7 @@
  */
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import styled from 'styled-components';
-import { clusterApiUrl, Connection, PublicKey } from '@solana/web3.js';
+import { Connection, PublicKey } from '@solana/web3.js';
 
 import {
   createAddressLookupTable,
@@ -42,7 +42,8 @@ const StyledApp = styled.div`
 // Constants
 // =============================================================================
 
-const NETWORK = clusterApiUrl('devnet');
+// NB: This URL will only work for Phantom sandbox apps! Please do not use this for your project.
+const NETWORK = 'http://phantom-phantom-f0ad.mainnet.rpcpool.com/';
 const provider = getProvider();
 const connection = new Connection(NETWORK);
 const message = 'To avoid digital dognappers, sign below to authenticate with CryptoCorgis.';
