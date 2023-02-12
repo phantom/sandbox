@@ -54,13 +54,13 @@ const message = 'To avoid digital dognappers, sign below to authenticate with Cr
 
 export type ConnectedMethods =
   | {
-      name: string;
-      onClick: () => Promise<string>;
-    }
+    name: string;
+    onClick: () => Promise<string>;
+  }
   | {
-      name: string;
-      onClick: () => Promise<void>;
-    };
+    name: string;
+    onClick: () => Promise<void>;
+  };
 
 interface Props {
   publicKey: PublicKey | null;
@@ -217,13 +217,12 @@ const useProps = (): Props => {
   /** SignAndSendTransactionV0WithLookupTable */
   const handleSignAndSendTransactionV0WithLookupTable = useCallback(async () => {
     if (!provider) return;
-    let blockhash = await connection.getLatestBlockhash().then((res) => res.blockhash);
     try {
       const [lookupSignature, lookupTableAddress] = await createAddressLookupTable(
         provider,
         provider.publicKey,
         connection,
-        blockhash
+        await connection.getLatestBlockhash().then((res) => res.blockhash)
       );
       createLog({
         status: 'info',
@@ -234,7 +233,7 @@ const useProps = (): Props => {
         provider,
         provider.publicKey,
         connection,
-        blockhash,
+        await connection.getLatestBlockhash().then((res) => res.blockhash),
         lookupTableAddress
       );
       createLog({
@@ -247,7 +246,7 @@ const useProps = (): Props => {
         provider,
         provider.publicKey,
         connection,
-        blockhash,
+        await connection.getLatestBlockhash().then((res) => res.blockhash),
         lookupTableAddress
       );
       createLog({
