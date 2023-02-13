@@ -19,6 +19,8 @@ import {
   signAndSendTransactionV0WithLookupTable,
   signMessage,
   signTransaction,
+  verifyMessage,
+  verifyOffChainLedgerMessage,
 } from './utils';
 
 import { TLog } from './types';
@@ -54,13 +56,13 @@ const message = 'To avoid digital dognappers, sign below to authenticate with Cr
 
 export type ConnectedMethods =
   | {
-    name: string;
-    onClick: () => Promise<string>;
-  }
+      name: string;
+      onClick: () => Promise<string>;
+    }
   | {
-    name: string;
-    onClick: () => Promise<void>;
-  };
+      name: string;
+      onClick: () => Promise<void>;
+    };
 
 interface Props {
   publicKey: PublicKey | null;
@@ -325,10 +327,39 @@ const useProps = (): Props => {
 
     try {
       const signedMessage = await signMessage(provider, message);
+      const verified = verifyMessage(message, signedMessage, provider.publicKey);
+      if (!verified) {
+        throw new Error(`Unable to verify signature ${signedMessage} with public key ${provider.publicKey.toString()}`);
+      }
       createLog({
         status: 'success',
         method: 'signMessage',
-        message: `Message signed: ${JSON.stringify(signedMessage)}`,
+        message: `✅ Message signed and verified: ${JSON.stringify(signedMessage)}`,
+      });
+      return signedMessage;
+    } catch (error) {
+      createLog({
+        status: 'error',
+        method: 'signMessage',
+        message: error.message,
+      });
+    }
+  }, [createLog]);
+
+  /** SignMessage (Ledger) */
+  const handleSignMessageLedger = useCallback(async () => {
+    if (!provider) return;
+
+    try {
+      const signedMessage = await signMessage(provider, message);
+      const verified = verifyOffChainLedgerMessage(message, signedMessage, provider.publicKey);
+      if (!verified) {
+        throw new Error(`Unable to verify signature ${signedMessage} with public key ${provider.publicKey.toString()}`);
+      }
+      createLog({
+        status: 'success',
+        method: 'signMessage',
+        message: `✅ Message signed and verified: ${JSON.stringify(signedMessage)}`,
       });
       return signedMessage;
     } catch (error) {
@@ -397,6 +428,10 @@ const useProps = (): Props => {
         onClick: handleSignMessage,
       },
       {
+        name: 'Sign Message (Ledger)',
+        onClick: handleSignMessageLedger,
+      },
+      {
         name: 'Disconnect',
         onClick: handleDisconnect,
       },
@@ -408,6 +443,7 @@ const useProps = (): Props => {
     handleSignTransaction,
     handleSignAllTransactions,
     handleSignMessage,
+    handleSignMessageLedger,
     handleDisconnect,
   ]);
 

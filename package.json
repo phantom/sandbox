@@ -16,7 +16,9 @@
   ],
   "main": "src/index.tsx",
   "dependencies": {
-    "@solana/web3.js": "1.63.1"
+    "@solana/web3.js": "1.63.1",
+    "bs58": "^4.0.1",
+    "tweetnacl": "^1.0.3"
   },
   "devDependencies": {
     "@types/react": "^17.0.21",
@@ -36,10 +38,5 @@
     "test": "react-scripts test --env=jsdom",
     "tsc": "tsc"
   },
-  "browserslist": [
-    ">0.2%",
-    "not dead",
-    "not ie <= 11",
-    "not op_mini all"
-  ]
+  "browserslist": [">0.2%", "not dead", "not ie <= 11", "not op_mini all"]
 }
