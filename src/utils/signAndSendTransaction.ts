@@ -13,7 +13,7 @@ const signAndSendTransaction = async (
   transaction: Transaction | VersionedTransaction
 ): Promise<string> => {
   try {
-    const { signature } = await provider.signAndSendTransaction(transaction);
+    const { signature } = await provider.signAndSendTransaction(transaction, {skipPreflight: false});
     return signature;
   } catch (error) {
     console.warn(error);
