@@ -1,4 +1,5 @@
 import { PhantomProvider } from '../types';
+import bs58 from 'bs58';
 
 /**
  * Signs a message
@@ -10,7 +11,10 @@ const signMessage = async (provider: PhantomProvider, message: string): Promise<
   try {
     const encodedMessage = new TextEncoder().encode(message);
     const signedMessage = await provider.signMessage(encodedMessage);
-    return signedMessage;
+    if ('signature' in signedMessage) {
+      return bs58.encode(signedMessage.signature);
+    }
+    throw new Error(`invalid signature object: ${JSON.stringify(signedMessage)}`);
   } catch (error) {
     console.warn(error);
     throw new Error(error.message);
